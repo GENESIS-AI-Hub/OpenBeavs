@@ -4,6 +4,7 @@ OSU GENESIS AI Hub for CS Capstone.
 A model for collaboration between Oregon State AI agents, utilizing context to provide users with better responses to queries.
 
 Team Roster/Contacts:
+
 James Smith
 #: 5037138776
 email: smitjam2@oregonstate.edu , galavantinggeckoguy@gmail.com
