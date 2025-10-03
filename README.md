@@ -1,5 +1,5 @@
 # GENESIS-AI-Hub
-OSU GENESIS AI Hub for CS Capstone.
+OSU GENESIS AI Hub for CS Capstone. Team # 043
 
 A model for collaboration between Oregon State AI agents, utilizing context to provide users with better responses to queries.
 
