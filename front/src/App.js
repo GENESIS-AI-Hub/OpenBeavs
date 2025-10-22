@@ -321,7 +321,8 @@ function App() {
                 )}
                 
                 <div className="mt-4 text-xs text-gray-500">
-                  The agent must have a .well-known/a2a-agent endpoint that returns agent information in JSON format.
+                  The agent must have a .well-known/agent.json endpoint that returns agent information in JSON format.<br/>
+                  Example: https://hello-world-gxfr.onrender.com/.well-known/agent.json
                 </div>
               </div>
             </div>

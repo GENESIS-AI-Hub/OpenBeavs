@@ -235,11 +235,17 @@ def register_agent(agent_request: RegisterAgentRequest):
 
 
 # Endpoint to register an agent using its .well-known/agent.json file
+# Example of a valid agent.json: https://hello-world-gxfr.onrender.com/.well-known/agent.json
+class RegisterAgentByUrlRequest(BaseModel):
+    agent_url: str
+
 @app.post("/agents/register-by-url", response_model=Agent)
-def register_agent_by_url(agent_url: str):
+def register_agent_by_url(request_data: RegisterAgentByUrlRequest):
     """Register a new agent by fetching its .well-known/agent.json file"""
     import requests
     from urllib.parse import urljoin, urlparse
+    
+    agent_url = request_data.agent_url
     
     if not agent_url:
         raise HTTPException(status_code=400, detail="Agent URL is required")
@@ -248,9 +254,10 @@ def register_agent_by_url(agent_url: str):
     if not agent_url.startswith(('http://', 'https://')):
         agent_url = 'https://' + agent_url
     
-    # Construct the well-known URL
+    # Parse the URL and normalize it to just the domain for the well-known file
     parsed_url = urlparse(agent_url)
-    well_known_url = f"{parsed_url.scheme}://{parsed_url.netloc}/.well-known/agent.json"
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    well_known_url = f"{base_url}/.well-known/agent.json"
     
     try:
         response = requests.get(well_known_url, timeout=10)
@@ -262,7 +269,7 @@ def register_agent_by_url(agent_url: str):
         # Extract name and description from the well-known format
         name = agent_data.get("name", "Unknown Agent")
         description = agent_data.get("description", "")
-        endpoint = agent_data.get("url", agent_url)  # Use the provided URL if no explicit endpoint
+        endpoint = agent_data.get("url", base_url)  # Use the base URL if no explicit endpoint
         
         # Generate new ID for the agent in our system
         agent_id = str(uuid.uuid4())
@@ -300,9 +307,10 @@ def fetch_agent_well_known(agent_url: str):
     if not agent_url.startswith(('http://', 'https://')):
         agent_url = 'https://' + agent_url
     
-    # Construct the well-known URL
+    # Parse the URL and normalize it to just the domain for the well-known file
     parsed_url = urlparse(agent_url)
-    well_known_url = f"{parsed_url.scheme}://{parsed_url.netloc}/.well-known/agent.json"
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    well_known_url = f"{base_url}/.well-known/agent.json"
     
     try:
         response = requests.get(well_known_url, timeout=10)
@@ -315,7 +323,7 @@ def fetch_agent_well_known(agent_url: str):
             "id": "temp_id",  # ID will be generated during actual registration
             "name": agent_data.get("name", "Unknown Agent"),
             "description": agent_data.get("description", ""),
-            "endpoint": agent_data.get("url", agent_url),
+            "endpoint": agent_data.get("url", base_url),
             "input_schema": agent_data.get("input_schema", {"type": "object", "properties": {"message": {"type": "string"}}}),
             "output_schema": agent_data.get("output_schema", {"type": "object", "properties": {"response": {"type": "string"}}})
         }
