@@ -136,7 +136,18 @@ To automatically close an issue tracked on your project board or GitHub reposito
 ## Code Style, Linting & Formatting
 Name the formatter/linter, config file locations, and the exact commands to
 check/fix locally.
-@ Update
+
+### Front end:
+- Formatter: [ESLint](https://eslint.org/)
+- Config path: `front/eslint.config.mjs`
+- Commands:
+    - `npm run lint` to lint
+  
+### Back end:
+- Formatter: [Ruff](https://docs.astral.sh/ruff/)
+- Config path: 
+- Commands:
+    - `ruff format` to lint
 
 ## Testing
 @Nam Long Tran
