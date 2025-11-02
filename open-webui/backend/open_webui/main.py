@@ -8,6 +8,7 @@ import shutil
 import sys
 import time
 import random
+import uuid
 
 from contextlib import asynccontextmanager
 from urllib.parse import urlencode, parse_qs, urlparse
@@ -76,6 +77,7 @@ from open_webui.routers import (
     tools,
     users,
     utils,
+    agents,
 )
 
 from open_webui.routers.retrieval import (
@@ -966,6 +968,7 @@ app.include_router(folders.router, prefix="/api/v1/folders", tags=["folders"])
 app.include_router(groups.router, prefix="/api/v1/groups", tags=["groups"])
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
 app.include_router(functions.router, prefix="/api/v1/functions", tags=["functions"])
+app.include_router(agents.router, prefix="/api/v1/agents", tags=["agents"])
 app.include_router(
     evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"]
 )
@@ -1470,6 +1473,105 @@ async def get_opensearch_xml():
     </OpenSearchDescription>
     """
     return Response(content=xml_content, media_type="application/xml")
+
+
+############################
+# A2A Protocol Endpoints
+############################
+
+
+@app.get("/.well-known/agent.json")
+async def get_agent_discovery_info(request: Request):
+    """Return agent information for A2A protocol discovery"""
+    return {
+        "capabilities": {"streaming": True},
+        "defaultInputModes": ["text"],
+        "defaultOutputModes": ["text"],
+        "description": "Open WebUI - A2A compatible AI interface platform",
+        "name": "Open WebUI Hub",
+        "skills": [
+            {
+                "description": "Interact with multiple AI agents and models",
+                "examples": ["chat with AI", "generate images", "process documents"],
+                "id": "ai_interaction",
+                "name": "AI Interaction",
+                "tags": ["chat", "ai", "multimodal"],
+            }
+        ],
+        "supportsAuthenticatedExtendedCard": True,
+        "url": f"{request.url.scheme}://{request.url.netloc}",
+        "version": VERSION,
+    }
+
+
+@app.post("/jsonrpc")
+async def jsonrpc_endpoint(request: Request):
+    """Handle JSON-RPC requests for A2A protocol"""
+    try:
+        request_json = await request.json()
+
+        # Basic JSON-RPC validation
+        if not isinstance(request_json, dict):
+            return JSONResponse(
+                content={
+                    "jsonrpc": "2.0",
+                    "error": {"code": -32600, "message": "Invalid Request"},
+                    "id": None,
+                },
+                status_code=400,
+            )
+
+        method = request_json.get("method")
+        params = request_json.get("params", {})
+        rpc_id = request_json.get("id")
+
+        # Handle different A2A methods
+        if method == "message/send":
+            # For now, return a simple acknowledgment
+            # This can be expanded to route to specific agents or models
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "messageId": str(uuid.uuid4()),
+                    "role": "assistant",
+                    "parts": [
+                        {
+                            "text": "Message received by Open WebUI. Use the /api/v1/agents endpoints for full A2A agent interaction.",
+                            "type": "text",
+                        }
+                    ],
+                },
+                "id": rpc_id,
+            }
+        else:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32601,
+                    "message": f"Method not found: {method}",
+                },
+                "id": rpc_id,
+            }
+    except json.JSONDecodeError:
+        return JSONResponse(
+            content={
+                "jsonrpc": "2.0",
+                "error": {"code": -32700, "message": "Parse error"},
+                "id": None,
+            },
+            status_code=400,
+        )
+    except Exception as e:
+        return {
+            "jsonrpc": "2.0",
+            "error": {"code": -32603, "message": f"Internal error: {str(e)}"},
+            "id": request_json.get("id") if isinstance(request_json, dict) else None,
+        }
+
+
+############################
+# Health Endpoints
+############################
 
 
 @app.get("/health")
