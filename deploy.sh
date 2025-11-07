@@ -5,8 +5,8 @@ set -e
 
 # --- Configuration ---
 # GCP Project ID and Region (replace with your values)
-GCP_PROJECT_ID="your-gcp-project-id"
-GCP_REGION="your-gcp-region"
+GCP_PROJECT_ID="genesis-hub-osu-test"
+GCP_REGION="us-west1"
 
 # Service names
 BACKEND_SERVICE_NAME="genesis-ai-hub-backend"
@@ -26,10 +26,11 @@ gcloud run deploy $BACKEND_SERVICE_NAME \
   --image gcr.io/$GCP_PROJECT_ID/$BACKEND_SERVICE_NAME:latest \
   --platform managed \
   --region $GCP_REGION \
+  --project $GCP_PROJECT_ID \
   --allow-unauthenticated
 
 # Get the backend URL
-BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE_NAME --platform managed --region $GCP_REGION --format 'value(status.url)')
+BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE_NAME --platform managed --region $GCP_REGION --project $GCP_PROJECT_ID --format 'value(status.url)')
 
 echo "Backend deployed to: $BACKEND_URL"
 
@@ -49,6 +50,7 @@ gcloud run deploy $FRONTEND_SERVICE_NAME \
   --image gcr.io/$GCP_PROJECT_ID/$FRONTEND_SERVICE_NAME:latest \
   --platform managed \
   --region $GCP_REGION \
+  --project $GCP_PROJECT_ID \
   --allow-unauthenticated
 
 echo "Frontend deployed!"
