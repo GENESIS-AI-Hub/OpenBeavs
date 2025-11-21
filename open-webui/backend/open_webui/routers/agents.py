@@ -367,3 +367,40 @@ async def send_message_to_agent(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing agent response: {str(e)}",
         )
+
+
+############################
+# GetAgentsAsModels
+############################
+
+
+@router.get("/models")
+async def get_agents_as_models(user=Depends(get_verified_user)):
+    """Get all active agents formatted as models for the chat interface"""
+    agents = Agents.get_agents()
+
+    models = []
+    for agent in agents:
+        model_id = f"agent:{agent.id}"
+        models.append({
+            "id": model_id,
+            "name": agent.name,
+            "object": "model",
+            "created": agent.created_at,
+            "owned_by": "a2a-agent",
+            "agent": {
+                "id": agent.id,
+                "description": agent.description,
+                "endpoint": agent.endpoint or agent.url,
+                "capabilities": agent.capabilities,
+                "skills": agent.skills,
+            },
+            "info": {
+                "meta": {
+                    "description": agent.description,
+                    "capabilities": agent.capabilities,
+                }
+            }
+        })
+
+    return {"data": models}

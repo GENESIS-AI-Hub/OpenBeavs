@@ -388,58 +388,85 @@ async def get_filtered_models(models, user):
 async def get_all_models(request: Request, user: UserModel) -> dict[str, list]:
     log.info("get_all_models()")
 
+    # Initialize models list
+    models = {"data": []}
+
     if not request.app.state.config.ENABLE_OPENAI_API:
-        return {"data": []}
+        log.info("ENABLE_OPENAI_API is False, skipping OpenAI models")
+        # Don't return early - still need to add A2A agents below
+    else:
+        responses = await get_all_models_responses(request, user=user)
 
-    responses = await get_all_models_responses(request, user=user)
+        def extract_data(response):
+            if response and "data" in response:
+                return response["data"]
+            if isinstance(response, list):
+                return response
+            return None
 
-    def extract_data(response):
-        if response and "data" in response:
-            return response["data"]
-        if isinstance(response, list):
-            return response
-        return None
+        def merge_models_lists(model_lists):
+            log.debug(f"merge_models_lists {model_lists}")
+            merged_list = []
 
-    def merge_models_lists(model_lists):
-        log.debug(f"merge_models_lists {model_lists}")
-        merged_list = []
+            for idx, models in enumerate(model_lists):
+                if models is not None and "error" not in models:
 
-        for idx, models in enumerate(model_lists):
-            if models is not None and "error" not in models:
-
-                merged_list.extend(
-                    [
-                        {
-                            **model,
-                            "name": model.get("name", model["id"]),
-                            "owned_by": "openai",
-                            "openai": model,
-                            "urlIdx": idx,
-                        }
-                        for model in models
-                        if (model.get("id") or model.get("name"))
-                        and (
-                            "api.openai.com"
-                            not in request.app.state.config.OPENAI_API_BASE_URLS[idx]
-                            or not any(
-                                name in model["id"]
-                                for name in [
-                                    "babbage",
-                                    "dall-e",
-                                    "davinci",
-                                    "embedding",
-                                    "tts",
-                                    "whisper",
-                                ]
+                    merged_list.extend(
+                        [
+                            {
+                                **model,
+                                "name": model.get("name", model["id"]),
+                                "owned_by": "openai",
+                                "openai": model,
+                                "urlIdx": idx,
+                            }
+                            for model in models
+                            if (model.get("id") or model.get("name"))
+                            and (
+                                "api.openai.com"
+                                not in request.app.state.config.OPENAI_API_BASE_URLS[idx]
+                                or not any(
+                                    name in model["id"]
+                                    for name in [
+                                        "babbage",
+                                        "dall-e",
+                                        "davinci",
+                                        "embedding",
+                                        "tts",
+                                        "whisper",
+                                    ]
+                                )
                             )
-                        )
-                    ]
-                )
+                        ]
+                    )
 
-        return merged_list
+            return merged_list
 
-    models = {"data": merge_models_lists(map(extract_data, responses))}
-    log.debug(f"models: {models}")
+        models = {"data": merge_models_lists(map(extract_data, responses))}
+        log.debug(f"models: {models}")
+
+    # Add A2A agents to the models list
+    if request.app.state.config.ENABLE_A2A_AGENTS:
+        from open_webui.models.agents import Agents
+
+        log.info("Adding A2A agents to models list")
+        agents = Agents.get_agents()
+
+        for agent in agents:
+            agent_model = {
+                "id": f"agent:{agent.id}",
+                "name": agent.name,
+                "owned_by": "a2a",
+                "urlIdx": -1,  # Special marker for A2A agents
+                "agent": {
+                    "id": agent.id,
+                    "name": agent.name,
+                    "endpoint": agent.endpoint or agent.url,
+                    "description": agent.description or "",
+                }
+            }
+            models["data"].append(agent_model)
+            log.info(f"Added A2A agent to models: {agent.name} (agent:{agent.id})")
 
     request.app.state.OPENAI_MODELS = {model["id"]: model for model in models["data"]}
     return models
@@ -592,16 +619,26 @@ async def generate_chat_completion(
     user=Depends(get_verified_user),
     bypass_filter: Optional[bool] = False,
 ):
-    if BYPASS_MODEL_ACCESS_CONTROL:
-        bypass_filter = True
+    try:
+        log.info(f"=== CHAT COMPLETIONS REQUEST ===")
+        log.info(f"Model ID: {form_data.get('model')}")
+        log.info(f"User: {user.email if user else 'None'}")
 
-    idx = 0
+        if BYPASS_MODEL_ACCESS_CONTROL:
+            bypass_filter = True
 
-    payload = {**form_data}
-    metadata = payload.pop("metadata", None)
+        idx = 0
 
-    model_id = form_data.get("model")
-    model_info = Models.get_model_by_id(model_id)
+        payload = {**form_data}
+        metadata = payload.pop("metadata", None)
+
+        model_id = form_data.get("model")
+        log.info(f"Looking up model_id: {model_id}")
+        model_info = Models.get_model_by_id(model_id)
+        log.info(f"Model info from DB: {model_info}")
+    except Exception as e:
+        log.exception(f"ERROR in chat completions setup: {e}")
+        raise
 
     # Check model info and override the payload
     if model_info:
@@ -641,6 +678,14 @@ async def generate_chat_completion(
             status_code=404,
             detail="Model not found",
         )
+
+    # Check if this is an A2A agent (urlIdx == -1)
+    if idx == -1 and "agent" in model:
+        log.info(f"Routing to A2A agent: {model['name']}")
+        from open_webui.utils.chat import generate_chat_completion as chat_generate
+
+        # Route to the A2A handler in utils/chat.py
+        return await chat_generate(form_data, user, request)
 
     # Get the API config for the model
     api_config = request.app.state.config.OPENAI_API_CONFIGS.get(

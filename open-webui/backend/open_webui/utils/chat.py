@@ -60,6 +60,192 @@ log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
+async def generate_a2a_agent_chat_completion(
+    request: Request,
+    form_data: dict,
+    user: Any,
+    model: dict,
+):
+    """Generate chat completion using A2A protocol"""
+    log.info("generate_a2a_agent_chat_completion")
+
+    import requests as req
+
+    # Extract agent information
+    agent_info = model.get("agent", {})
+    agent_endpoint = agent_info.get("endpoint")
+
+    if not agent_endpoint:
+        raise Exception("Agent endpoint not configured")
+
+    # Google ADK agents use root path for JSON-RPC, not /jsonrpc
+    # Just use the endpoint as-is (e.g., http://localhost:8001)
+    agent_endpoint = agent_endpoint.rstrip('/')
+
+    log.info(f"Sending A2A request to: {agent_endpoint}")
+
+    # Get the last user message from form_data
+    messages = form_data.get("messages", [])
+    if not messages:
+        raise Exception("No messages provided")
+
+    # Get the last message content
+    last_message = messages[-1]
+    user_message_content = last_message.get("content", "")
+
+    # Build JSON-RPC request following A2A protocol
+    message_id = str(uuid.uuid4())
+    jsonrpc_request = {
+        "jsonrpc": "2.0",
+        "method": "message/send",
+        "params": {
+            "messageId": message_id,  # Top-level messageId required by A2A spec
+            "message": {
+                "messageId": message_id,
+                "role": "user",
+                "parts": [{"text": user_message_content}],  # Remove "type" field
+            }
+        },
+        "id": 1,
+    }
+
+    log.debug(f"JSON-RPC request: {jsonrpc_request}")
+
+    if form_data.get("stream"):
+        # For streaming, we'll make a non-streaming request and stream the response
+        # A2A protocol doesn't necessarily support streaming, so we convert
+        try:
+            response = req.post(agent_endpoint, json=jsonrpc_request, timeout=60)
+            response.raise_for_status()
+            response_data = response.json()
+
+            # Extract the response text from JSON-RPC result
+            result = response_data.get("result", {})
+            response_text = ""
+
+            # A2A response format: result.artifacts[0].parts[0].text
+            if isinstance(result, dict) and "artifacts" in result:
+                artifacts = result.get("artifacts", [])
+                if artifacts and len(artifacts) > 0:
+                    artifact_parts = artifacts[0].get("parts", [])
+                    if artifact_parts and len(artifact_parts) > 0:
+                        response_text = artifact_parts[0].get("text", "")
+
+            # Fallback to old format if new format doesn't work
+            if not response_text and isinstance(result, dict):
+                parts = result.get("parts", [])
+                if parts and isinstance(parts, list):
+                    response_text = parts[0].get("text", str(result))
+                else:
+                    response_text = result.get("text", str(result))
+            elif not response_text:
+                response_text = str(result)
+
+            # Create OpenAI-compatible streaming response
+            async def stream_response():
+                chunk_id = f"chatcmpl-{uuid.uuid4()}"
+                # Send the response as chunks
+                words = response_text.split()
+                for i, word in enumerate(words):
+                    chunk = {
+                        "id": chunk_id,
+                        "object": "chat.completion.chunk",
+                        "created": int(time.time()),
+                        "model": form_data.get("model"),
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {"content": word + " " if i < len(words) - 1 else word},
+                                "finish_reason": None,
+                            }
+                        ],
+                    }
+                    yield f"data: {json.dumps(chunk)}\n\n"
+                    await asyncio.sleep(0.01)
+
+                # Send final chunk
+                final_chunk = {
+                    "id": chunk_id,
+                    "object": "chat.completion.chunk",
+                    "created": int(time.time()),
+                    "model": form_data.get("model"),
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                }
+                yield f"data: {json.dumps(final_chunk)}\n\n"
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(
+                stream_response(),
+                media_type="text/event-stream",
+            )
+
+        except Exception as e:
+            log.error(f"Error communicating with A2A agent: {e}")
+            raise Exception(f"Error communicating with agent: {str(e)}")
+
+    else:
+        # Non-streaming response
+        try:
+            response = req.post(agent_endpoint, json=jsonrpc_request, timeout=60)
+            response.raise_for_status()
+            response_data = response.json()
+
+            # Extract the response text from JSON-RPC result
+            result = response_data.get("result", {})
+            response_text = ""
+
+            # A2A response format: result.artifacts[0].parts[0].text
+            if isinstance(result, dict) and "artifacts" in result:
+                artifacts = result.get("artifacts", [])
+                if artifacts and len(artifacts) > 0:
+                    artifact_parts = artifacts[0].get("parts", [])
+                    if artifact_parts and len(artifact_parts) > 0:
+                        response_text = artifact_parts[0].get("text", "")
+
+            # Fallback to old format if new format doesn't work
+            if not response_text and isinstance(result, dict):
+                parts = result.get("parts", [])
+                if parts and isinstance(parts, list):
+                    response_text = parts[0].get("text", str(result))
+                else:
+                    response_text = result.get("text", str(result))
+            elif not response_text:
+                response_text = str(result)
+
+            # Return OpenAI-compatible format
+            return {
+                "id": f"chatcmpl-{uuid.uuid4()}",
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": form_data.get("model"),
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": response_text,
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                },
+            }
+
+        except Exception as e:
+            log.error(f"Error communicating with A2A agent: {e}")
+            raise Exception(f"Error communicating with agent: {str(e)}")
+
+
 async def generate_direct_chat_completion(
     request: Request,
     form_data: dict,
@@ -183,10 +369,41 @@ async def generate_chat_completion(
         models = request.app.state.MODELS
 
     model_id = form_data["model"]
-    if model_id not in models:
-        raise Exception("Model not found")
+    log.info(f"Chat request for model_id: {model_id}")
 
-    model = models[model_id]
+    # Check if this is an A2A agent model
+    if model_id.startswith("agent:"):
+        from open_webui.models.agents import Agents
+
+        agent_id = model_id.replace("agent:", "")
+        log.info(f"A2A agent request detected. Agent ID: {agent_id}")
+        agent = Agents.get_agent_by_id(agent_id)
+
+        if not agent:
+            log.error(f"Agent not found in database: {agent_id}")
+            raise Exception("Agent not found")
+
+        log.info(f"Found agent: {agent.name} at {agent.endpoint or agent.url}")
+
+        # Construct model object for agent
+        model = {
+            "id": model_id,
+            "name": agent.name,
+            "object": "model",
+            "created": agent.created_at,
+            "owned_by": "a2a-agent",
+            "agent": {
+                "id": agent.id,
+                "description": agent.description,
+                "endpoint": agent.endpoint or agent.url,
+                "capabilities": agent.capabilities,
+                "skills": agent.skills,
+            }
+        }
+    elif model_id not in models:
+        raise Exception("Model not found")
+    else:
+        model = models[model_id]
 
     if getattr(request.state, "direct", False):
         return await generate_direct_chat_completion(
@@ -247,6 +464,13 @@ async def generate_chat_completion(
                     ),
                     "selected_model_id": selected_model_id,
                 }
+
+        if model.get("owned_by") == "a2a-agent":
+            # Route to A2A agent
+            log.info(f"Routing to A2A agent handler for model: {model.get('name')}")
+            return await generate_a2a_agent_chat_completion(
+                request, form_data, user=user, model=model
+            )
 
         if model.get("pipe"):
             # Below does not require bypass_filter because this is the only route the uses this function and it is already bypassing the filter

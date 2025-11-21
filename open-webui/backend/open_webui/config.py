@@ -788,6 +788,22 @@ ENABLE_DIRECT_CONNECTIONS = PersistentConfig(
 )
 
 ####################################
+# A2A Agent Connections
+####################################
+
+ENABLE_A2A_AGENTS = PersistentConfig(
+    "ENABLE_A2A_AGENTS",
+    "a2a.enable",
+    os.environ.get("ENABLE_A2A_AGENTS", "True").lower() == "true",
+)
+
+A2A_AGENT_CONNECTIONS = PersistentConfig(
+    "A2A_AGENT_CONNECTIONS",
+    "a2a.connections",
+    [],
+)
+
+####################################
 # OLLAMA_BASE_URL
 ####################################
 

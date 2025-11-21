@@ -7,7 +7,7 @@
 	import { getOllamaConfig, updateOllamaConfig } from '$lib/apis/ollama';
 	import { getOpenAIConfig, updateOpenAIConfig, getOpenAIModels } from '$lib/apis/openai';
 	import { getModels as _getModels } from '$lib/apis';
-	import { getDirectConnectionsConfig, setDirectConnectionsConfig } from '$lib/apis/configs';
+	import { getDirectConnectionsConfig, setDirectConnectionsConfig, getA2AAgentsConfig, setA2AAgentsConfig } from '$lib/apis/configs';
 
 	import { config, models, settings, user } from '$lib/stores';
 
@@ -19,6 +19,7 @@
 	import OpenAIConnection from './Connections/OpenAIConnection.svelte';
 	import AddConnectionModal from '$lib/components/AddConnectionModal.svelte';
 	import OllamaConnection from './Connections/OllamaConnection.svelte';
+	import AgentConnection from './Connections/AgentConnection.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -42,6 +43,9 @@
 	let ENABLE_OLLAMA_API: null | boolean = null;
 
 	let directConnectionsConfig = null;
+
+	let ENABLE_A2A_AGENTS = true;
+	let A2A_AGENT_CONNECTIONS: { url: string; name: string; config: object }[] = [];
 
 	let pipelineUrls = {};
 	let showAddOpenAIConnectionModal = false;
@@ -117,6 +121,20 @@
 		}
 	};
 
+	const updateA2AAgentsHandler = async () => {
+		const res = await setA2AAgentsConfig(localStorage.token, {
+			ENABLE_A2A_AGENTS,
+			A2A_AGENT_CONNECTIONS
+		}).catch((error) => {
+			toast.error(`${error}`);
+		});
+
+		if (res) {
+			toast.success($i18n.t('A2A Agent settings updated'));
+			await models.set(await getModels());
+		}
+	};
+
 	const addOpenAIConnectionHandler = async (connection) => {
 		OPENAI_API_BASE_URLS = [...OPENAI_API_BASE_URLS, connection.url];
 		OPENAI_API_KEYS = [...OPENAI_API_KEYS, connection.key];
@@ -149,6 +167,13 @@
 				})(),
 				(async () => {
 					directConnectionsConfig = await getDirectConnectionsConfig(localStorage.token);
+				})(),
+				(async () => {
+					const a2aConfig = await getA2AAgentsConfig(localStorage.token);
+					if (a2aConfig) {
+						ENABLE_A2A_AGENTS = a2aConfig.ENABLE_A2A_AGENTS ?? true;
+						A2A_AGENT_CONNECTIONS = a2aConfig.A2A_AGENT_CONNECTIONS || [];
+					}
 				})()
 			]);
 
@@ -197,6 +222,7 @@
 		updateOpenAIHandler();
 		updateOllamaHandler();
 		updateDirectConnectionsHandler();
+		updateA2AAgentsHandler();
 
 		dispatch('save');
 	};
@@ -383,6 +409,68 @@
 						)}
 					</div>
 				</div>
+			</div>
+
+			<hr class=" border-gray-100 dark:border-gray-850" />
+
+			<div class="pr-1.5 my-2">
+				<div class="flex justify-between items-center text-sm mb-2">
+					<div class="font-medium">{$i18n.t('A2A Agents')}</div>
+
+					<div class="mt-1">
+						<Switch
+							bind:state={ENABLE_A2A_AGENTS}
+							on:change={async () => {
+								updateA2AAgentsHandler();
+							}}
+						/>
+					</div>
+				</div>
+
+				{#if ENABLE_A2A_AGENTS}
+					<hr class=" border-gray-100 dark:border-gray-850 my-2" />
+
+					<div class="">
+						<div class="flex justify-between items-center">
+							<div class="font-medium">{$i18n.t('Manage A2A Agent Connections')}</div>
+
+							<Tooltip content={$i18n.t(`Add Agent`)}>
+								<button
+									class="px-1"
+									on:click={() => {
+										A2A_AGENT_CONNECTIONS = [...A2A_AGENT_CONNECTIONS, { url: '', name: '', config: {} }];
+									}}
+									type="button"
+								>
+									<Plus />
+								</button>
+							</Tooltip>
+						</div>
+
+						<div class="flex w-full gap-1.5">
+							<div class="flex-1 flex flex-col gap-1.5 mt-1.5">
+								{#each A2A_AGENT_CONNECTIONS as connection, idx}
+									<AgentConnection
+										bind:url={connection.url}
+										bind:name={connection.name}
+										bind:config={connection.config}
+										onSubmit={() => {
+											updateA2AAgentsHandler();
+										}}
+										onDelete={() => {
+											A2A_AGENT_CONNECTIONS = A2A_AGENT_CONNECTIONS.filter((_, connIdx) => idx !== connIdx);
+											updateA2AAgentsHandler();
+										}}
+									/>
+								{/each}
+							</div>
+						</div>
+
+						<div class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t('A2A agents appear as models in the chat interface. Add agent URLs to connect.')}
+						</div>
+					</div>
+				{/if}
 			</div>
 		{:else}
 			<div class="flex h-full justify-center">

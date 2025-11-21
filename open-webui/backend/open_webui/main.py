@@ -107,6 +107,9 @@ from open_webui.config import (
     OPENAI_API_CONFIGS,
     # Direct Connections
     ENABLE_DIRECT_CONNECTIONS,
+    # A2A Agent Connections
+    ENABLE_A2A_AGENTS,
+    A2A_AGENT_CONNECTIONS,
     # Tool Server Configs
     TOOL_SERVER_CONNECTIONS,
     # Code Execution
@@ -511,6 +514,15 @@ app.state.TOOL_SERVERS = []
 ########################################
 
 app.state.config.ENABLE_DIRECT_CONNECTIONS = ENABLE_DIRECT_CONNECTIONS
+
+########################################
+#
+# A2A AGENT CONNECTIONS
+#
+########################################
+
+app.state.config.ENABLE_A2A_AGENTS = ENABLE_A2A_AGENTS
+app.state.config.A2A_AGENT_CONNECTIONS = A2A_AGENT_CONNECTIONS
 
 ########################################
 #
@@ -1000,6 +1012,11 @@ async def get_models(request: Request, user=Depends(get_verified_user)):
     def get_filtered_models(models, user):
         filtered_models = []
         for model in models:
+            # Skip filtering for agent models - they're always accessible if enabled
+            if model.get("owned_by") == "a2a-agent":
+                filtered_models.append(model)
+                continue
+
             if model.get("arena"):
                 if has_access(
                     user.id,
@@ -1044,6 +1061,39 @@ async def get_models(request: Request, user=Depends(get_verified_user)):
 
         models.append(model)
 
+    # Add A2A agent models if enabled
+    from open_webui.models.agents import Agents
+    enable_a2a = getattr(request.app.state.config, "ENABLE_A2A_AGENTS", True)
+    if enable_a2a:
+        try:
+            agents = Agents.get_agents()
+            for agent in agents:
+                model_id = f"agent:{agent.id}"
+                agent_model = {
+                    "id": model_id,
+                    "name": agent.name,
+                    "object": "model",
+                    "created": agent.created_at,
+                    "owned_by": "a2a-agent",
+                    "agent": {
+                        "id": agent.id,
+                        "description": agent.description,
+                        "endpoint": agent.endpoint or agent.url,
+                        "capabilities": agent.capabilities,
+                        "skills": agent.skills,
+                    },
+                    "info": {
+                        "meta": {
+                            "description": agent.description,
+                            "capabilities": agent.capabilities,
+                        }
+                    },
+                    "tags": [{"name": "agent"}, {"name": "a2a"}]
+                }
+                models.append(agent_model)
+        except Exception as e:
+            log.debug(f"Error loading A2A agents: {e}")
+
     model_order_list = request.app.state.config.MODEL_ORDER_LIST
     if model_order_list:
         model_order_dict = {model_id: i for i, model_id in enumerate(model_order_list)}
@@ -1084,7 +1134,23 @@ async def chat_completion(
     try:
         if not model_item.get("direct", False):
             model_id = form_data.get("model", None)
+            
+            log.info(f"[CHAT] Requested model_id: {model_id}")
+            log.info(f"[CHAT] Available models in cache: {list(request.app.state.MODELS.keys()) if request.app.state.MODELS else 'None'}")
+
+            # If the model id isn't present in the cached MODELS dict, try to
+            # refresh models when it's an A2A agent (they may have been just
+            # registered via the settings UI) before failing.
             if model_id not in request.app.state.MODELS:
+                log.warning(f"[CHAT] Model {model_id} not in cache")
+                if isinstance(model_id, str) and model_id.startswith("agent:"):
+                    log.info(f"[CHAT] Model is A2A agent, refreshing models cache...")
+                    await get_all_models(request, user=user)
+                    log.info(f"[CHAT] After refresh, available models: {list(request.app.state.MODELS.keys())}")
+
+            if model_id not in request.app.state.MODELS:
+                log.error(f"[CHAT] Model {model_id} still not found after refresh")
+                log.error(f"[CHAT] Final models cache: {list(request.app.state.MODELS.keys())}")
                 raise Exception("Model not found")
 
             model = request.app.state.MODELS[model_id]

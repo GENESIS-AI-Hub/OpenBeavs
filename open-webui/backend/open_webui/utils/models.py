@@ -62,10 +62,11 @@ async def get_all_base_models(request: Request, user: UserModel = None):
 
 async def get_all_models(request, user: UserModel = None):
     models = await get_all_base_models(request, user=user)
+    log.info(f"[MODELS] get_all_base_models returned {len(models)} models")
 
-    # If there are no models, return an empty list
-    if len(models) == 0:
-        return []
+    # Don't return early if no base models - we still need to add A2A agents
+    # if len(models) == 0:
+    #     return []
 
     # Add arena models
     if request.app.state.config.ENABLE_EVALUATION_ARENA_MODELS:
@@ -221,13 +222,60 @@ async def get_all_models(request, user: UserModel = None):
             model["actions"].extend(
                 get_action_items_from_module(action_function, function_module)
             )
+
+    # Add A2A agent models if enabled
+    try:
+        enable_a2a = getattr(request.app.state.config, "ENABLE_A2A_AGENTS", True)
+        log.info(f"[MODELS] A2A agents enabled: {enable_a2a}")
+        if enable_a2a:
+            from open_webui.models.agents import Agents
+
+            agents = Agents.get_agents()
+            log.info(f"[MODELS] Found {len(agents)} agents in database")
+            for agent in agents:
+                model_id = f"agent:{agent.id}"
+                log.info(f"[MODELS] Processing agent: {agent.name} (id: {agent.id}, endpoint: {agent.endpoint or agent.url})")
+                agent_model = {
+                    "id": model_id,
+                    "name": agent.name,
+                    "object": "model",
+                    "created": agent.created_at,
+                    "owned_by": "a2a-agent",
+                    "agent": {
+                        "id": agent.id,
+                        "description": agent.description,
+                        "endpoint": agent.endpoint or agent.url,
+                        "capabilities": agent.capabilities,
+                        "skills": agent.skills,
+                    },
+                    "info": {
+                        "meta": {
+                            "description": agent.description,
+                            "capabilities": agent.capabilities,
+                        }
+                    },
+                    "actions": []  # Agents don't have actions like regular models
+                }
+                models.append(agent_model)
+                log.info(f"[MODELS] Added A2A agent model: {agent.name} ({model_id})")
+    except Exception as e:
+        log.error(f"[MODELS] Error loading A2A agents: {e}")
+        import traceback
+        traceback.print_exc()
+
     log.debug(f"get_all_models() returned {len(models)} models")
 
     request.app.state.MODELS = {model["id"]: model for model in models}
+    log.info(f"[MODELS] Set request.app.state.MODELS with {len(request.app.state.MODELS)} models")
+    log.info(f"[MODELS] Model IDs in cache: {list(request.app.state.MODELS.keys())}")
     return models
 
 
 def check_model_access(user, model):
+    # A2A agents are always accessible if enabled
+    if model.get("owned_by") == "a2a-agent":
+        return True
+
     if model.get("arena"):
         if not has_access(
             user.id,
