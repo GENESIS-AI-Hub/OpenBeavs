@@ -4,36 +4,35 @@ This guide explains how to use the universal deployment script to deploy any ADK
 
 ## Overview
 
-The `deploy_agent.py` script is a universal deployment tool that can deploy **any** ADK agent in the `agents/` directory to GCP. It automatically:
+The `deploy_agent.py` script is a simple wrapper around the `adk deploy agent_engine` command that:
 
-- Detects the correct agent directory structure
-- Creates GCS staging buckets if needed
-- Configures deployment parameters
-- Handles errors and provides detailed feedback
+- **Auto-detects your GCP project and region** from `gcloud config`
+- **Automatically creates staging buckets** if needed
+- **Works exactly like the ADK CLI** - just pass the agent name
+- **Supports all platforms** (Windows, macOS, Linux)
+
+**Simple usage:**
+```bash
+python deploy_agent.py <agent-name>
+```
+
+That's it! The script handles everything else automatically.
 
 ## Prerequisites
 
 ### 1. Google Cloud Platform Setup
 
-**Create a GCP Project:**
-```bash
-gcloud projects create YOUR-PROJECT-ID
-gcloud config set project YOUR-PROJECT-ID
-```
-
-**Enable Required APIs:**
-```bash
-gcloud services enable aiplatform.googleapis.com
-gcloud services enable storage.googleapis.com
-```
-
-**Set Up Authentication:**
+**Authenticate and set your project:**
 ```bash
 # Authenticate with your Google account
 gcloud auth login
-
-# Set application default credentials
 gcloud auth application-default login
+
+# Set your default project
+gcloud config set project YOUR-PROJECT-ID
+
+# (Optional) Set your default region
+gcloud config set compute/region us-west1
 ```
 
 ### 2. Install Google ADK
@@ -47,37 +46,11 @@ Verify installation:
 adk --version
 ```
 
-### 3. Install gsutil
-
-The script uses `gsutil` for GCS bucket management. It's included with the Google Cloud SDK:
-
-```bash
-# Install Google Cloud SDK if not already installed
-# Visit: https://cloud.google.com/sdk/docs/install
-
-# Verify gsutil is available
-gsutil version
-```
-
-## Configuration
-
-### Default Settings
-
-The script uses these default values:
-- **Project ID**: `genesis-hub-osu-test`
-- **Region**: `us-west1`
-- **Staging Bucket**: `gs://{project-id}-staging` (auto-generated)
-- **Display Name**: `{agent-name}-agent` (auto-generated)
-
-### Customizing Configuration
-
-You can override defaults using command-line arguments (see Usage section below).
-
 ## Usage
 
 ### Basic Deployment
 
-Deploy an agent with default settings:
+Deploy an agent with auto-detected settings:
 
 ```bash
 cd agents
@@ -93,9 +66,15 @@ python deploy_agent.py oregon-state-expert
 python deploy_agent.py Cyrano-de-Bergerac
 ```
 
-### Custom Project and Region
+The script will automatically:
+- Use your project from `gcloud config get-value project`
+- Use your region from `gcloud config get-value compute/region` (or default to `us-west1`)
+- Create staging bucket as `gs://<project-id>-staging`
+- Set display name as `<agent-name>-agent`
 
-Deploy to a specific GCP project and region:
+### Custom Configuration
+
+Override any auto-detected values:
 
 ```bash
 python deploy_agent.py <agent-name> --project YOUR-PROJECT-ID --region us-central1
@@ -145,41 +124,25 @@ View all available options:
 python deploy_agent.py --help
 ```
 
-## Agent Directory Structure
+## How It Works
 
-The script automatically detects the deployable directory for each agent. It looks for `agent.py` in:
+The deployment script:
 
-1. `{agent-name}/agent/` (preferred for new agents)
-2. `{agent-name}/orchestrator/` (for multi-agent systems)
-3. `{agent-name}/src/` (alternative structure)
-4. `{agent-name}/` (root-level agent.py)
+1. **Auto-detects GCP configuration** from your `gcloud config`
+2. **Constructs the ADK command** with proper parameters
+3. **Runs the deployment** from the agents directory
+4. **Reports success** with A2A agent card instructions
 
-**Example structures:**
-
-```
-agents/
-├── oregon-state-expert/
-│   └── agent/
-│       └── agent.py  ✓ Found here
-│
-├── Cyrano-de-Bergerac/
-│   └── orchestrator/
-│       └── agent.py  ✓ Found here
-│
-└── simple-agent/
-    └── agent.py      ✓ Found here
+The script essentially runs:
+```bash
+adk deploy agent_engine <agent-name> \
+  --project=<project> \
+  --region=<region> \
+  --staging_bucket=<bucket> \
+  --display_name=<name>
 ```
 
-## Deployment Process
-
-When you run the deployment script, it:
-
-1. **Validates** the agent directory exists
-2. **Detects** the correct subdirectory containing `agent.py`
-3. **Checks** for the staging bucket (creates if needed)
-4. **Runs** `adk deploy agent_engine` with your configuration
-5. **Streams** deployment output in real-time
-6. **Reports** success or failure
+But handles all the configuration automatically!
 
 ## Troubleshooting
 
