@@ -78,7 +78,7 @@ def SendMessageRequest(params: Dict[str, Any]) -> Result:
             files=files if files else None,
         )
 
-        #messages_db[chat_id].append(user_message.dict())
+        messages_db[chat_id].append(user_message.dict())
 
         # Get the agent for this chat
         chat_agent_id = chats_db[chat_id]["agent_id"]
@@ -364,7 +364,7 @@ def send_message(chat_id: str, message_request: SendMessageRequest):
         timestamp=datetime.now(),
     )
 
-    messages_db[chat_id].append(assistant_message.dict())
+    #messages_db[chat_id].append(assistant_message.dict())
 
     # Update chat timestamp
     chats_db[chat_id]["updated_at"] = datetime.now()
