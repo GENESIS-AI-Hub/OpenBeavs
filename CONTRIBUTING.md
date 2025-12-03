@@ -62,21 +62,9 @@ run the app locally.
     ```
     The backend will be available at `http://localhost:8000`.
 
-#### Frontend
+#### Frontend (Open WebUI)
 
-1.  Navigate to the `front` directory:
-    ```bash
-    cd front
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Run the development server:
-    ```bash
-    npm start
-    ```
-    The frontend will be available at `http://localhost:3000`.
+For detailed setup and development instructions for the Open WebUI frontend, please refer to `front/README.md`.
 
 ## Branching & Workflow
 Our workflow is GitFlow.
@@ -137,11 +125,12 @@ To automatically close an issue tracked on your project board or GitHub reposito
 Name the formatter/linter, config file locations, and the exact commands to
 check/fix locally.
 
-### Front end:
-- Formatter: [ESLint](https://eslint.org/)
-- Config path: `front/eslint.config.mjs`
+### Front end (Open WebUI):
+The frontend is based on Open WebUI. For linting and formatting:
 - Commands:
-    - `npm run lint` to lint
+    - `npm run lint` - Lints frontend, types, and backend
+    - `npm run lint:frontend` - Lints frontend with ESLint
+    - `npm run format` - Formats code with Prettier
   
 ### Back end:
 - Formatter: [Ruff](https://docs.astral.sh/ruff/)

@@ -30,10 +30,9 @@ GH: jsweet8258
 
 ## Project Structure
 
-- `front/`: Contains the React frontend application.
+- `front/`: A customized fork of Open WebUI with A2A Agent Registry support.
 - `back/`: Contains the FastAPI backend application.
 - `deploy.sh`: A script to deploy both applications to Google Cloud Run.
-- `open-webui/`: A customized fork of Open WebUI with A2A Agent Registry support.
 
 ## Open WebUI & Agent Registry
 
@@ -42,7 +41,7 @@ This project includes a customized version of **Open WebUI** that features a dec
 - **Workspace Integration**: Manage agents directly from the UI.
 - **A2A Protocol**: Full support for Agent-to-Agent communication.
 
-For detailed documentation, please refer to [open-webui/README.md](./open-webui/README.md).
+For detailed documentation, please refer to [front/README.md](./front/README.md).
 
 ## Prerequisites
 
@@ -70,23 +69,9 @@ For detailed documentation, please refer to [open-webui/README.md](./open-webui/
 
 - Note: To lint, use `ruff check`
 
-### Frontend
+### Frontend (Open WebUI)
 
-1.  Navigate to the `front` directory:
-    ```bash
-    cd front
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Run the development server:
-    ```bash
-    npm start
-    ```
-    The frontend will be available at `http://localhost:3000`.
-
-- Note: To lint, use `npm run lint`
+For detailed setup and development instructions for the Open WebUI frontend, please refer to [front/README.md](./front/README.md).
 
 ## Deployment
 
