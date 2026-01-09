@@ -4,7 +4,7 @@ import time
 import uuid
 
 from sqlalchemy import BigInteger, Column, String, Text
-from open_webui.internal.db import Base, JSONField, get_db
+from open_webui.internal.db import Base, JSONField, get_db, engine
 
 ####################
 # Ticket DB Schema
@@ -60,6 +60,9 @@ class TicketUpdateForm(BaseModel):
 ####################
 
 class TicketsTable:
+    def __init__(self):
+        Ticket.metadata.create_all(bind=engine)
+
     def insert_new_ticket(
         self, form_data: TicketForm, user_id: Optional[str] = None
     ) -> Optional[TicketModel]:
