@@ -53,6 +53,48 @@
             "presentation": {
                 "reveal": "silent"
             }
+        },
+        {
+            "label": "Open GENESIS AI Hub App GitHub",
+            "type": "shell",
+            // This is the default/fallback command
+            "command": "open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App",
+            "windows": {
+                "command": "start https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+            },
+            "osx": {
+                "command": "open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+            },
+            "linux": {
+                "command": "xdg-open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "Open Time Tracking Sheet",
+            "type": "shell",
+            // This is the default/fallback command
+            "command": "open https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0",
+            "windows": {
+                "command": "start https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0"
+            },
+            "osx": {
+                "command": "open https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0"
+            },
+            "linux": {
+                "command": "xdg-open https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
         }
     ]
 }
