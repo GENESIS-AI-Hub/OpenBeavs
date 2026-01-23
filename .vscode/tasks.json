@@ -11,10 +11,7 @@
             "presentation": {
                 "echo": true,
                 "reveal": "always",
-                "focus": false,
-                "panel": "new",
-                "showReuseMessage": true,
-                "clear": false
+                "panel": "new"
             },
             "runOptions": {
                 "runOn": "folderOpen"
@@ -30,13 +27,31 @@
             "presentation": {
                 "echo": true,
                 "reveal": "always",
-                "focus": false,
-                "panel": "new",
-                "showReuseMessage": true,
-                "clear": false
+                "panel": "new"
             },
             "runOptions": {
                 "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "Open GitHub Project",
+            "type": "shell",
+            // This is the default/fallback command
+            "command": "open https://github.com/orgs/GENESIS-AI-Hub/projects/3",
+            "windows": {
+                "command": "start https://github.com/orgs/GENESIS-AI-Hub/projects/3"
+            },
+            "osx": {
+                "command": "open https://github.com/orgs/GENESIS-AI-Hub/projects/3"
+            },
+            "linux": {
+                "command": "xdg-open https://github.com/orgs/GENESIS-AI-Hub/projects/3"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
             }
         }
     ]
