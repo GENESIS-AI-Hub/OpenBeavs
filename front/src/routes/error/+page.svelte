@@ -34,12 +34,12 @@
 						<br class=" " />
 						<a
 							class=" font-semibold underline"
-							href="https://github.com/open-webui/open-webui#how-to-install-"
+							href="https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App#installation"
 							target="_blank">{$i18n.t('See readme.md for instructions')}</a
 						>
 						{$i18n.t('or')}
-						<a class=" font-semibold underline" href="https://discord.gg/5rJgQTnV4s" target="_blank"
-							>{$i18n.t('join our Discord for help.')}</a
+						<a class=" font-semibold underline" href="https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App/issues" target="_blank"
+							>{$i18n.t('contact support for help.')}</a
 						>
 					</div>
 
