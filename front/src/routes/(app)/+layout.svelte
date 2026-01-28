@@ -44,6 +44,9 @@
 	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
+	import BetaWarningModal from '$lib/components/BetaWarningModal.svelte';
+	import TicketSubmissionModal from '$lib/components/TicketSubmissionModal.svelte';
+	import ReportIssueButton from '$lib/components/layout/ReportIssueButton.svelte';
 	import { get } from 'svelte/store';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 
@@ -54,6 +57,14 @@
 	let localDBChats = [];
 
 	let version;
+
+	// Ticket submission state
+	let showBetaWarning = false;
+	let showTicketModal = false;
+
+	const openTicketModal = () => {
+		showTicketModal = true;
+	};
 
 	onMount(async () => {
 		if ($user === undefined || $user === null) {
@@ -238,6 +249,8 @@
 
 <SettingsModal bind:show={$showSettings} />
 <ChangelogModal bind:show={$showChangelog} />
+<BetaWarningModal bind:show={showBetaWarning} onReportClick={openTicketModal} />
+<TicketSubmissionModal bind:show={showTicketModal} />
 
 {#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
 	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>
@@ -321,6 +334,11 @@
 			</div>
 		{/if}
 	</div>
+
+	<!-- Floating Report Issue Button -->
+	{#if loaded && ['user', 'admin'].includes($user?.role)}
+		<ReportIssueButton onClick={openTicketModal} />
+	{/if}
 </div>
 
 <style>

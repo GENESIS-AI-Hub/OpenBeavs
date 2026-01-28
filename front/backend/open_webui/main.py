@@ -79,6 +79,7 @@ from open_webui.routers import (
     utils,
     agents,
     registry,
+    tickets,
 )
 
 from open_webui.routers.retrieval import (
@@ -526,6 +527,7 @@ app.state.config.ENABLE_A2A_AGENTS = ENABLE_A2A_AGENTS
 app.state.config.A2A_AGENT_CONNECTIONS = A2A_AGENT_CONNECTIONS
 
 app.include_router(registry.router, prefix="/api/v1/registry", tags=["registry"])
+app.include_router(tickets.router, prefix="/api/v1", tags=["tickets"])
 
 ########################################
 #
