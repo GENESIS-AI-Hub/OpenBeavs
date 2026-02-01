@@ -47,6 +47,7 @@
 	import BetaWarningModal from '$lib/components/BetaWarningModal.svelte';
 	import TicketSubmissionModal from '$lib/components/TicketSubmissionModal.svelte';
 	import ReportIssueButton from '$lib/components/layout/ReportIssueButton.svelte';
+	import PrivacyNoticeModal from '$lib/components/PrivacyNoticeModal.svelte';
 	import { get } from 'svelte/store';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 
@@ -61,6 +62,7 @@
 	// Ticket submission state
 	let showBetaWarning = false;
 	let showTicketModal = false;
+	let showPrivacyNotice = false;
 
 	const openTicketModal = () => {
 		showTicketModal = true;
@@ -207,6 +209,10 @@
 				showChangelog.set($settings?.version !== $config.version);
 			}
 
+			if (!localStorage.getItem('privacy_notice_accepted')) {
+				showPrivacyNotice = true;
+			}
+
 			if ($user?.permissions?.chat?.temporary ?? true) {
 				if ($page.url.searchParams.get('temporary-chat') === 'true') {
 					temporaryChatEnabled.set(true);
@@ -251,6 +257,12 @@
 <ChangelogModal bind:show={$showChangelog} />
 <BetaWarningModal bind:show={showBetaWarning} onReportClick={openTicketModal} />
 <TicketSubmissionModal bind:show={showTicketModal} />
+<PrivacyNoticeModal
+	bind:show={showPrivacyNotice}
+	onConfirm={() => {
+		localStorage.setItem('privacy_notice_accepted', 'true');
+	}}
+/>
 
 {#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
 	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>
