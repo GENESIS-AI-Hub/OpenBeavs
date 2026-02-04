@@ -1,0 +1,100 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Backend",
+            "type": "shell",
+            "command": "sh dev.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/front/backend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "panel": "new"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "Build Frontend",
+            "type": "shell",
+            "command": "npm run build:copy",
+            "options": {
+                "cwd": "${workspaceFolder}/front"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "panel": "new"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "Open GitHub Project",
+            "type": "shell",
+            // This is the default/fallback command
+            "command": "open https://github.com/orgs/GENESIS-AI-Hub/projects/3",
+            "windows": {
+                "command": "start https://github.com/orgs/GENESIS-AI-Hub/projects/3"
+            },
+            "osx": {
+                "command": "open https://github.com/orgs/GENESIS-AI-Hub/projects/3"
+            },
+            "linux": {
+                "command": "xdg-open https://github.com/orgs/GENESIS-AI-Hub/projects/3"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "Open GENESIS AI Hub App GitHub",
+            "type": "shell",
+            // This is the default/fallback command
+            "command": "open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App",
+            "windows": {
+                "command": "start https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+            },
+            "osx": {
+                "command": "open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+            },
+            "linux": {
+                "command": "xdg-open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "Open Time Tracking Sheet",
+            "type": "shell",
+            // This is the default/fallback command
+            "command": "open https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0",
+            "windows": {
+                "command": "start https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0"
+            },
+            "osx": {
+                "command": "open https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0"
+            },
+            "linux": {
+                "command": "xdg-open https://docs.google.com/spreadsheets/d/1Ng2ouBGV0Pa51FlJVALf6lTAolXttX2abvFJO6Dl0qY/edit?gid=0#gid=0"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
+        }
+    ]
+}
