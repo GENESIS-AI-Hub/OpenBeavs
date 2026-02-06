@@ -1,8 +1,8 @@
-# OSU Genesis AI Hub 🎓
+# OpenBeavs 🎓
 
-**OSU Genesis AI Hub is an extensible, feature-rich AI Agent Registry platform with A2A (Agent-to-Agent) protocol support.** Built on a customized fork of Open WebUI, it enables discovery, sharing, and deployment of AI agents across Oregon State University's research ecosystem. It supports various LLM runners like **Ollama** and **OpenAI-compatible APIs**, with **built-in inference engine** for RAG.
+**OpenBeavs is an extensible, feature-rich AI Agent Registry platform with A2A (Agent-to-Agent) protocol support.** Built on a customized fork of Open WebUI, it enables discovery, sharing, and deployment of AI agents across Oregon State University's research ecosystem. It supports various LLM runners like **Ollama** and **OpenAI-compatible APIs**, with **built-in inference engine** for RAG.
 
-![OSU Genesis AI Hub Demo](./demo.gif)
+![OpenBeavs Demo](./demo.gif)
 
 ## Table of Contents
 - [About This Fork](#about-this-fork)
@@ -10,7 +10,7 @@
 - [Part 1: Install Miniforge (Conda)](#part-1-install-miniforge-conda)
 - [Part 2: Install NVM (Node Version Manager)](#part-2-install-nvm-node-version-manager)
 - [Part 3: Clone the Repository](#part-3-clone-the-repository)
-- [Part 4: Build and Run OSU Genesis AI Hub](#part-4-build-and-run-osu-genesis-ai-hub)
+- [Part 4: Build and Run OpenBeavs](#part-4-build-and-run-openbeavs)
 - [Development Workflow](#development-workflow)
 - [A2A Protocol Integration](#a2a-protocol-integration)
 - [Troubleshooting](#troubleshooting)
@@ -23,7 +23,7 @@
 
 ## About This Project
 
-This is the **OSU Genesis AI Hub** - an AI Agent Registry platform for Oregon State University. It is built on a customized fork of [Open WebUI](https://github.com/open-webui/open-webui) based on **version 0.6.5** (commit: `07d8460126a686de9a99e2662d06106e22c3f6b6`), extended with Agent-to-Agent (A2A) protocol support.
+This is the **OpenBeavs** - an AI Agent Registry platform for Oregon State University. It is built on a customized fork of [Open WebUI](https://github.com/open-webui/open-webui) based on **version 0.6.5** (commit: `07d8460126a686de9a99e2662d06106e22c3f6b6`), extended with Agent-to-Agent (A2A) protocol support.
 
 ### Repository Optimization
 
@@ -323,7 +323,7 @@ The A2A protocol enables AI agents to:
                │ (JSON-RPC 2.0)
                │
 ┌──────────────┴──────────────────────┐
-│   GENESIS AI Hub (Port 8000)        │
+│   OpenBeavs (Port 8000)             │
 │   - A2A Backend Server              │
 │   - Agent Registry                  │
 │   - Chat Management                 │
@@ -350,13 +350,13 @@ The **Agent Registry** allows users to discover, share, and install A2A agents f
 
 ### Setup: Running Both Services
 
-To test the A2A protocol integration, you need to run both Open WebUI and the GENESIS AI Hub backend.
+To test the A2A protocol integration, you need to run both Open WebUI and the OpenBeavs backend.
 
 #### Terminal 1: Start Open WebUI (A2A Hub)
 
 ```bash
 # Navigate to open-webui backend
-cd /GENESIS-AI-Hub-App/open-webui/backend
+cd /OpenBeavs/open-webui/backend
 
 # Activate conda environment
 conda activate open-webui
@@ -373,11 +373,11 @@ sh dev.sh
 - API Docs: http://localhost:8080/docs
 - A2A Discovery: http://localhost:8080/.well-known/agent.json
 
-#### Terminal 2: Start GENESIS AI Hub Backend (A2A Server)
+#### Terminal 2: Start OpenBeavs Backend (A2A Server)
 
 ```bash
 # Navigate to the main backend directory
-cd /GENESIS-AI-Hub-App/back
+cd /OpenBeavs/back
 
 # Install dependencies (first time only)
 pip install -r requirements.txt
@@ -389,7 +389,7 @@ uvicorn main:app --reload --port 8000
 # INFO: Uvicorn running on http://0.0.0.0:8000
 ```
 
-**GENESIS AI Hub will be available at:**
+**OpenBeavs will be available at:**
 - API Root: http://localhost:8000
 - A2A Discovery: http://localhost:8000/.well-known/agent.json
 - API Docs: http://localhost:8000/docs
@@ -406,7 +406,7 @@ A comprehensive test script is provided to verify your A2A setup:
 
 ```bash
 # Navigate to the project root
-cd /GENESIS-AI-Hub-App/open-webui
+cd /OpenBeavs/open-webui
 
 # Activate your conda environment
 conda activate open-webui
@@ -588,7 +588,7 @@ To view registered agents directly in the database:
 
 ```bash
 # Navigate to the backend data directory
-cd /GENESIS-AI-Hub-App/open-webui/backend/open_webui/data
+cd /OpenBeavs/open-webui/backend/open_webui/data
 
 # Open the database
 sqlite3 webui.db
@@ -762,7 +762,7 @@ This repository is a customized fork of the original [Open WebUI](https://github
 
 This fork includes modifications and rebranding by © 2025 Oregon State University, and all new contributions are licensed under the **MIT License**.
 
-For more deatiled information about the repository, refer to the [GENESIS AI Hub documentation](../README.md).
+For more deatiled information about the repository, refer to the [OpenBeavs documentation](../README.md).
 
 ---
 

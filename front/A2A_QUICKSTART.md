@@ -1,16 +1,16 @@
 # A2A Agent Integration - Quick Start Guide
 
-This guide provides setup instructions for using A2A (Agent-to-Agent) agents with OSU Genesis AI Hub.
+This guide provides setup instructions for using A2A (Agent-to-Agent) agents with OpenBeavs.
 
 ## Overview
 
-A2A integration enables OSU Genesis AI Hub to communicate with external AI agents using the A2A protocol (JSON-RPC 2.0). Agents appear as selectable models in the chat interface.
+A2A integration enables OpenBeavs to communicate with external AI agents using the A2A protocol (JSON-RPC 2.0). Agents appear as selectable models in the chat interface.
 
 ## Prerequisites
 
-- OSU Genesis AI Hub v0.6.5 or later
+- OpenBeavs v0.6.5 or later
 - An A2A-compatible agent running
-- Admin access to OSU Genesis AI Hub
+- Admin access to OpenBeavs
 
 ## Setup
 
@@ -28,7 +28,7 @@ Verify the agent is running:
 curl http://localhost:8001/.well-known/agent.json
 ```
 
-### 2. Start OSU Genesis AI Hub
+### 2. Start OpenBeavs
 
 ```bash
 cd backend
@@ -40,7 +40,7 @@ Access at: http://localhost:8080
 
 ### 3. Add Agent in Admin Settings
 
-1. Log in to OSU Genesis AI Hub
+1. Log in to OpenBeavs
 2. Navigate to: Settings > Admin Settings > Connections
 3. Scroll to **A2A Agents** section
 4. Toggle switch to enable A2A agents
@@ -136,7 +136,7 @@ curl -X POST http://localhost:8080/api/v1/configs/a2a_agents/verify \
       "id": 1
     }'
   ```
-- Check OSU Genesis AI Hub backend logs for errors
+- Check OpenBeavs backend logs for errors
 
 ## Creating Custom A2A Agents
 
@@ -259,11 +259,11 @@ Verify the agent is running:
 curl http://localhost:8001/.well-known/agent-card.json
 ```
 
-### Step 2: Start OSU Genesis AI Hub
+### Step 2: Start OpenBeavs
 
 ```bash
-# Navigate to OSU Genesis AI Hub backend
-cd /Users/minsoup/GENESIS-AI-Hub-App/open-webui/backend
+# Navigate to OpenBeavs backend
+cd /Users/minsoup/OpenBeavs/open-webui/backend
 
 # Activate conda environment
 conda activate open-webui

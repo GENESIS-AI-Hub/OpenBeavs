@@ -105,9 +105,9 @@ for source in log_sources:
 
 log.setLevel(SRC_LOG_LEVELS["CONFIG"])
 
-WEBUI_NAME = os.environ.get("WEBUI_NAME", "OSU Genesis AI Hub")
-if WEBUI_NAME != "OSU Genesis AI Hub":
-    WEBUI_NAME += " (OSU Genesis AI Hub)"
+WEBUI_NAME = os.environ.get("WEBUI_NAME", "OpenBeavs")
+if WEBUI_NAME != "OpenBeavs":
+    WEBUI_NAME += " (OpenBeavs)"
 
 WEBUI_FAVICON_URL = "/static/favicon.png?v=osu-logo"
 

@@ -8,7 +8,7 @@ import pytest
 def test_1(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert r.json()["message"].startswith("OSU Genesis Hub Backend")
+    assert r.json()["message"].startswith("OpenBeavs Backend")
 
 # 2) Agents list should include the seeded demo agent from startup.
 def test_2(client, app_and_state):
@@ -178,7 +178,7 @@ def test_15(client):
     r = client.get("/.well-known/agent.json")
     assert r.status_code == 200
     body = r.json()
-    assert body["name"] == "OSU Genesis Hub"
+    assert body["name"] == "OpenBeavs"
     assert body["capabilities"]["streaming"] is True
     assert body["url"].startswith("http")
 

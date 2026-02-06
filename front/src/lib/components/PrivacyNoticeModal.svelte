@@ -18,7 +18,7 @@
 	<div class="w-full p-4 px-5 text-gray-700 dark:text-gray-100">
 		<div class="overflow-y-auto max-h-96 scrollbar-hidden text-sm">
 			<p class="mb-4">
-				{$i18n.t('Welcome to GENESIS AI Hub. Your privacy is important to us.')}
+				{$i18n.t('Welcome to OpenBeavs. Your privacy is important to us.')}
 			</p>
 			<p class="mb-2">
 				{$i18n.t('Before you proceed to use our agents, please note the following:')}
