@@ -13,7 +13,7 @@
 	import { getKnowledgeBases } from '$lib/apis/knowledge';
 	import { getFunctions } from '$lib/apis/functions';
 	import { getModels, getToolServersData, getVersionUpdates } from '$lib/apis';
-	import { getAllTags } from '$lib/apis/chats';
+	import { getAllTags, createNewChat } from '$lib/apis/chats';
 	import { getPrompts } from '$lib/apis/prompts';
 	import { getTools } from '$lib/apis/tools';
 	import { getBanners } from '$lib/apis/configs';
@@ -240,7 +240,67 @@
 			await tick();
 		}
 
-		loaded = true;
+			// Sync embedded chats
+			const keys = Object.keys(localStorage);
+			const embeddedChatKeys = keys.filter((key) => key.startsWith('embed_chat_'));
+
+			if (embeddedChatKeys.length > 0) {
+				for (const key of embeddedChatKeys) {
+					try {
+						const messages = JSON.parse(localStorage.getItem(key) ?? '[]');
+						if (messages.length > 0) {
+							const agentId = key.replace('embed_chat_', '');
+							
+							// Convert messages to history format
+							const history = {
+								messages: {},
+								currentId: null
+							};
+							
+							let parentId = null;
+							for (const msg of messages) {
+								const msgId = crypto.randomUUID();
+								history.messages[msgId] = {
+									id: msgId,
+									role: msg.role,
+									content: msg.content,
+									parentId: parentId,
+									childrenIds: [],
+									models: [agentId]
+								};
+								
+								if (parentId) {
+									history.messages[parentId].childrenIds.push(msgId);
+								}
+								
+								parentId = msgId;
+								history.currentId = msgId;
+							}
+
+							const chatPayload = {
+								title: `Chat with ${agent.name ?? 'Agent'}`, // ideally we'd get the name, but for now... 
+                                // Actually we don't have the name here easily without fetching.
+                                // Let's just use "Chat with Agent" or "Embedded Chat".
+								title: `Embedded Chat`,
+								models: [`agent:${agentId}`],
+								history: history,
+								tags: ['embedded'],
+								params: {}
+							};
+
+							await createNewChat(localStorage.token, { chat: chatPayload });
+							localStorage.removeItem(key);
+							toast.success(`Synced conversation with ${agentId}`);
+						} else {
+							localStorage.removeItem(key);
+						}
+					} catch (e) {
+						console.error('Failed to sync chat', key, e);
+					}
+				}
+			}
+
+			loaded = true;
 	});
 
 	const checkForVersionUpdates = async () => {
