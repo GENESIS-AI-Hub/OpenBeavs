@@ -32,6 +32,21 @@ async def get_agent_details(agent_id: str):
         profile_image_url=agent.profile_image_url
     )
 
+@router.get("/agents", response_model=List[EmbedAgentResponse])
+async def get_available_agents():
+    """List all available agents for selection in the embed view."""
+    agents = Agents.get_agents()
+    return [
+        EmbedAgentResponse(
+            id=agent.id,
+            name=agent.name,
+            description=agent.description,
+            profile_image_url=agent.profile_image_url
+        )
+        for agent in agents
+        if agent.is_active
+    ]
+
 class EmbedChatRequest(BaseModel):
     model: str 
     messages: List[Dict[str, Any]]
