@@ -5,7 +5,7 @@ of Done.
 ## Code of Conduct
 ### 1. Our Professional Pledge
 
-We are committed to making the **OSU Genesis Hub** project a positive, harassment-free, and inclusive experience for everyone involved, regardless of technical background, personal identity, or level of experience.
+We are committed to making the **OpenBeavs** project a positive, harassment-free, and inclusive experience for everyone involved, regardless of technical background, personal identity, or level of experience.
 
 ### 2. Our Standards of Behavior
 
@@ -62,9 +62,9 @@ run the app locally.
     ```
     The backend will be available at `http://localhost:8000`.
 
-#### Frontend (OSU Genesis AI Hub)
+#### Frontend (OpenBeavs)
 
-For detailed setup and development instructions for the OSU Genesis AI Hub frontend, please refer to `front/README.md`.
+For detailed setup and development instructions for the OpenBeavs frontend, please refer to `front/README.md`.
 
 ## Branching & Workflow
 Our workflow is GitFlow.
@@ -78,7 +78,7 @@ After merging a branch, close/delete feature branch.
 To file an issue, create a ticket in our GitHub projects (link here). You are required to provide a general estimation of the problem size using t-shirt size standard. Triage will be handled by assigning to the project member closest to the issues domain.
 
 ## Commit Messages
-Adopting a standard convention is a great practice, especially since the **OSU Genesis Hub** code is public and will eventually move to the **DRI-GENESIS Repository**. We will use a simplified version of **Conventional Commits**. This convention makes the project history clean, aids in debugging, and can even be used to automatically generate changelogs.
+Adopting a standard convention is a great practice, especially since the **OpenBeavs** code is public. We will use a simplified version of **Conventional Commits**. This convention makes the project history clean, aids in debugging, and can even be used to automatically generate changelogs.
 
 The simple format to follow is:
 

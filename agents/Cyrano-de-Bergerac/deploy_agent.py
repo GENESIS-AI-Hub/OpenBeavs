@@ -4,10 +4,10 @@ import os
 
 # --- Configuration ---
 # These are your project-specific values
-GCP_PROJECT_ID = "genesis-hub-osu-test"
+GCP_PROJECT_ID = "openbeavs-test"
 GCP_REGION = "us-west1"
 STAGING_BUCKET = f"gs://{GCP_PROJECT_ID}-staging"
-DISPLAY_NAME = "genesis-hub-agent-orchestrator"
+DISPLAY_NAME = "openbeavs-agent-orchestrator"
 AGENT_DIR = "orchestrator" # The directory containing your agent's code
 # ---------------------
 

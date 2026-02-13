@@ -23,8 +23,8 @@ def get_agent_info(request: Request):
         "capabilities": {"streaming": True},
         "defaultInputModes": ["text"],
         "defaultOutputModes": ["text"],
-        "description": "OSU Genesis Hub for agent coordination and management",
-        "name": "OSU Genesis Hub",
+        "description": "OpenBeavs for agent coordination and management",
+        "name": "OpenBeavs",
         "skills": [
             {
                 "description": "Manages and coordinates AI agents",
@@ -263,7 +263,7 @@ def startup_event():
 # Chat endpoints
 @app.get("/")
 def read_root():
-    return {"message": "OSU Genesis Hub Backend - Ready!"}
+    return {"message": "OpenBeavs Backend - Ready!"}
 
 
 @app.get("/chats", response_model=List[Chat])

@@ -261,7 +261,7 @@
 				if (done) {
 				if ($isLastActiveTab) {
 					if ($settings?.notificationEnabled ?? false) {
-						new Notification(`${title} | OSU Genesis AI Hub`, {
+						new Notification(`${title} | OpenBeavs`, {
 							body: content,
 								icon: `${WEBUI_BASE_URL}/static/favicon.png`
 							});
@@ -410,7 +410,7 @@
 			if (type === 'message') {
 			if ($isLastActiveTab) {
 				if ($settings?.notificationEnabled ?? false) {
-					new Notification(`${data?.user?.name} (#${event?.channel?.name}) | OSU Genesis AI Hub`, {
+					new Notification(`${data?.user?.name} (#${event?.channel?.name}) | OpenBeavs`, {
 						body: data?.content,
 							icon: data?.user?.profile_image_url ?? `${WEBUI_BASE_URL}/static/favicon.png`
 						});
@@ -557,7 +557,8 @@
 				} else {
 					// Don't redirect if we're already on the auth page
 					// Needed because we pass in tokens from OAuth logins via URL fragments
-					if ($page.url.pathname !== '/auth') {
+					// Don't redirect if we're already on the auth page or embed page
+					if ($page.url.pathname !== '/auth' && !$page.url.pathname.startsWith('/embed')) {
 						await goto(`/auth?redirect=${encodedUrl}`);
 					}
 				}

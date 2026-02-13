@@ -55,18 +55,18 @@
             }
         },
         {
-            "label": "Open GENESIS AI Hub App GitHub",
+            "label": "Open BeavsHub GitHub",
             "type": "shell",
             // This is the default/fallback command
-            "command": "open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App",
+            "command": "open https://github.com/GENESIS-AI-Hub/OpenBeavs",
             "windows": {
-                "command": "start https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+                "command": "start https://github.com/GENESIS-AI-Hub/OpenBeavs"
             },
             "osx": {
-                "command": "open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+                "command": "open https://github.com/GENESIS-AI-Hub/OpenBeavs"
             },
             "linux": {
-                "command": "xdg-open https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App"
+                "command": "xdg-open https://github.com/GENESIS-AI-Hub/OpenBeavs"
             },
             "runOptions": {
                 "runOn": "folderOpen"

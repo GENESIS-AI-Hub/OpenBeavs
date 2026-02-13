@@ -195,7 +195,7 @@
 </script>
 
 <svelte:head>
-	<title>#{channel?.name ?? 'Channel'} | OSU Genesis AI Hub</title>
+	<title>#{channel?.name ?? 'Channel'} | OSU OpenBeavs</title>
 </svelte:head>
 
 <div

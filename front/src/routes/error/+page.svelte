@@ -34,11 +34,11 @@
 						<br class=" " />
 						<a
 							class=" font-semibold underline"
-							href="https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App#installation"
+							href="https://github.com/GENESIS-AI-Hub/OpenBeavs#installation"
 							target="_blank">{$i18n.t('See readme.md for instructions')}</a
 						>
 						{$i18n.t('or')}
-						<a class=" font-semibold underline" href="https://github.com/GENESIS-AI-Hub/GENESIS-AI-Hub-App/issues" target="_blank"
+						<a class=" font-semibold underline" href="https://github.com/GENESIS-AI-Hub/OpenBeavs/issues" target="_blank"
 							>{$i18n.t('contact support for help.')}</a
 						>
 					</div>
