@@ -1,12 +1,12 @@
 
 from google.adk.agents import Agent
+from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
 import os
-import json
 import httpx
-import asyncio
 import threading
 import time
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -15,142 +15,98 @@ load_dotenv(Path(__file__).parent / ".env")
 # Configuration
 OPENWEBUI_URL = os.environ.get("OPENWEBUI_URL", "http://localhost:8080")
 OPENWEBUI_API_KEY = os.environ.get("OPENWEBUI_API_KEY", "")
-AGENT_CACHE_REFRESH_SECONDS = int(os.environ.get("AGENT_CACHE_REFRESH_SECONDS", "30"))
-
-# ─── Cached agents list ───────────────────────────────────────────────
-# Fetched on startup and refreshed every N seconds in a background thread.
-# This avoids a circular deadlock: Open WebUI (single-worker) → Master Router
-# → back to Open WebUI would hang because the single worker is already busy.
-_cached_agents: list = []
-_cache_lock = threading.Lock()
+DISCOVERY_RETRY_INTERVAL = int(os.environ.get("DISCOVERY_RETRY_INTERVAL", "5"))
+DISCOVERY_MAX_RETRIES = int(os.environ.get("DISCOVERY_MAX_RETRIES", "24"))
 
 
-def _refresh_agents_cache():
-    """Fetch agents from Open WebUI and update the cache."""
-    global _cached_agents
-    try:
-        headers = {
-            "Authorization": f"Bearer {OPENWEBUI_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        response = httpx.get(
-            f"{OPENWEBUI_URL}/api/v1/agents/user-agents",
-            headers=headers,
-            timeout=10,
-        )
-        response.raise_for_status()
-        agents = response.json()
-        with _cache_lock:
-            _cached_agents = agents
-        print(f"[Router] Cache refreshed: {len(agents)} agents found")
-    except Exception as e:
-        print(f"[Router] Cache refresh failed: {type(e).__name__}: {e}")
+# ─── Discover agents from Open WebUI ─────────────────────────────────
+
+def _fetch_agents_from_api() -> list:
+    """Fetch the list of registered agents from the Open WebUI API."""
+    headers = {
+        "Authorization": f"Bearer {OPENWEBUI_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    response = httpx.get(
+        f"{OPENWEBUI_URL}/api/v1/agents/user-agents",
+        headers=headers,
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
-def _cache_refresh_loop():
-    """Background thread that periodically refreshes the agents cache."""
-    while True:
-        _refresh_agents_cache()
-        time.sleep(AGENT_CACHE_REFRESH_SECONDS)
+def _build_sub_agents(agents_data: list) -> list[RemoteA2aAgent]:
+    """Create RemoteA2aAgent instances from the agents data."""
+    sub_agents = []
+    seen_endpoints = set()
+
+    for agent_data in agents_data:
+        name = agent_data.get("name", "")
+        endpoint = agent_data.get("endpoint", "")
+
+        # Skip the Master Router itself and agents without endpoints
+        if name.lower() == "master router" or not endpoint:
+            continue
+
+        # Skip duplicate endpoints (same agent registered twice)
+        if endpoint in seen_endpoints:
+            continue
+        seen_endpoints.add(endpoint)
+
+        # Normalize the endpoint URL for the agent card
+        base_url = endpoint.rstrip("/")
+        if base_url.startswith("https://") and base_url.endswith(":443"):
+            base_url = base_url[:-4]
+
+        # Create a clean agent name (must be valid Python identifier for ADK)
+        clean_name = re.sub(r'[^a-zA-Z0-9_]', '_', name.lower()).strip('_')
+        if not clean_name:
+            clean_name = f"agent_{agent_data.get('id', 'unknown')}"
+
+        description = agent_data.get("description", f"Remote agent: {name}")
+
+        try:
+            remote_agent = RemoteA2aAgent(
+                name=clean_name,
+                agent_card=base_url,
+                description=description,
+            )
+            sub_agents.append(remote_agent)
+            print(f"[Router] Registered sub-agent: {clean_name} -> {base_url}")
+        except Exception as e:
+            print(f"[Router] Failed to create sub-agent '{name}': {type(e).__name__}: {e}")
+
+    return sub_agents
 
 
-# Start the background cache refresh thread
-_cache_thread = threading.Thread(target=_cache_refresh_loop, daemon=True)
-_cache_thread.start()
-
-
-# ─── Tool functions ───────────────────────────────────────────────────
-
-def get_user_agents() -> dict:
-    """Fetch all agents that are currently installed and available in the GENESIS AI Hub.
+def _discover_with_retry() -> list[RemoteA2aAgent]:
+    """Discover specialist agents, retrying until Open WebUI is available."""
+    for attempt in range(1, DISCOVERY_MAX_RETRIES + 1):
+        try:
+            agents_data = _fetch_agents_from_api()
+            print(f"[Router] Discovered {len(agents_data)} agents from Open WebUI")
+            return _build_sub_agents(agents_data)
+        except Exception as e:
+            print(f"[Router] Discovery attempt {attempt}/{DISCOVERY_MAX_RETRIES} failed: {type(e).__name__}: {e}")
+            if attempt < DISCOVERY_MAX_RETRIES:
+                print(f"[Router] Retrying in {DISCOVERY_RETRY_INTERVAL}s...")
+                time.sleep(DISCOVERY_RETRY_INTERVAL)
     
-    Returns a dictionary containing a list of available agents, each with their
-    id, name, description, skills, capabilities, and endpoint.
-    Use this tool FIRST before deciding how to route the user's message.
-    """
-    with _cache_lock:
-        agents = list(_cached_agents)
-    
-    # Filter out this router agent itself
-    agents = [a for a in agents if a.get("name", "").lower() != "master router"]
-    
-    print(f"[Router] get_user_agents called — returning {len(agents)} agents from cache")
-    
-    if not agents:
-        return {"agents": [], "message": "No specialist agents are currently installed. Answer the user's question directly."}
-    
-    return {"agents": agents}
+    print("[Router] WARNING: All discovery attempts failed. Starting with 0 sub-agents.")
+    return []
 
 
-async def route_to_agent(agent_endpoint: str, message: str) -> dict:
-    """Send a message to a specific specialist agent via A2A protocol and return its response.
-    
-    Args:
-        agent_endpoint: The full URL endpoint of the agent to route to (from get_user_agents results).
-        message: The user's original message to forward to the specialist agent.
-    
-    Returns a dictionary with the agent's response text.
-    """
-    import uuid
-    
-    try:
-        agent_endpoint = agent_endpoint.rstrip("/")
-        
-        message_id = str(uuid.uuid4())
-        jsonrpc_request = {
-            "jsonrpc": "2.0",
-            "method": "message/send",
-            "params": {
-                "messageId": message_id,
-                "message": {
-                    "messageId": message_id,
-                    "role": "user",
-                    "parts": [{"text": message}],
-                },
-            },
-            "id": 1,
-        }
-        
-        print(f"[Router] Routing to agent at {agent_endpoint}")
-        response_data = await asyncio.to_thread(
-            lambda: httpx.post(agent_endpoint, json=jsonrpc_request, timeout=60).json()
-        )
-        
-        # Extract response text from A2A JSON-RPC result
-        result = response_data.get("result", {})
-        response_text = ""
-        
-        # A2A format: result.artifacts[0].parts[0].text
-        if isinstance(result, dict) and "artifacts" in result:
-            artifacts = result.get("artifacts", [])
-            if artifacts:
-                parts = artifacts[0].get("parts", [])
-                if parts:
-                    response_text = parts[0].get("text", "")
-        
-        # Fallback formats
-        if not response_text and isinstance(result, dict):
-            parts = result.get("parts", [])
-            if parts and isinstance(parts, list):
-                response_text = parts[0].get("text", str(result))
-            else:
-                response_text = result.get("text", str(result))
-        elif not response_text:
-            response_text = str(result)
-        
-        print(f"[Router] Got response from agent ({len(response_text)} chars)")
-        return {"response": response_text, "routed_to": agent_endpoint}
-    
-    except Exception as e:
-        return {"error": f"Failed to communicate with agent at {agent_endpoint}: {str(e)}"}
+# ─── Build the agent tree ────────────────────────────────────────────
 
-
-# ─── Agent definition ────────────────────────────────────────────────
+print("[Router] Discovering specialist agents...")
+discovered_sub_agents = _discover_with_retry()
+print(f"[Router] {len(discovered_sub_agents)} sub-agents ready")
 
 router_agent = Agent(
     name="master_router",
-    model=os.environ.get("ROUTER_MODEL", "gemini-2.0-flash"),
-    tools=[get_user_agents, route_to_agent],
+    model=os.environ.get("ROUTER_MODEL", "gemini-2.5-flash"),
+    sub_agents=discovered_sub_agents,
     description=(
         "The Master Router Agent for GENESIS AI Hub. "
         "Intelligently routes user conversations to the most appropriate specialist agent, "
@@ -159,32 +115,21 @@ router_agent = Agent(
     instruction=(
         "You are the **Master Router** for the GENESIS AI Hub — the intelligent front door "
         "that connects users to the right specialist agent.\n\n"
-        
+
         "## Your Primary Role\n"
-        "1. When a user sends a message, FIRST call `get_user_agents` to see what specialist agents are available.\n"
-        "2. Analyze the user's message and compare it against each agent's **name**, **description**, **skills**, and **capabilities**.\n"
-        "3. If a specialist agent is a strong match:\n"
-        "   - Tell the user you're routing them to that agent (e.g., 'Let me connect you with the Oregon State Expert for that!')\n"
-        "   - Call `route_to_agent` with that agent's endpoint and the user's original message\n"
-        "   - Return the specialist's response to the user, prefixed with who answered\n"
-        "4. If NO specialist is a clear match, answer the user's question directly using your own knowledge.\n\n"
-        
+        "Analyze the user's message and delegate to the most appropriate specialist sub-agent.\n"
+        "If no specialist is a clear match, answer the user's question directly using your own knowledge.\n\n"
+
         "## Routing Decision Guidelines\n"
-        "- Match based on **topic relevance** — the agent's description and skills should clearly cover the user's topic\n"
+        "- Match based on **topic relevance** — the sub-agent's description should clearly cover the user's topic\n"
         "- When in doubt between multiple agents, pick the most specific match\n"
-        "- For generic greetings ('hi', 'hello'), respond directly — don't route\n"
-        "- For meta questions ('what agents do you have?', 'what can you do?'), list the available agents with descriptions\n"
-        "- If routing fails (agent is down), apologize and try to answer directly or suggest trying again later\n\n"
-        
-        "## Response Format\n"
-        "- When routing: briefly mention which specialist you're connecting to, then show their response\n"
-        "- When answering directly: respond naturally as a helpful, general-purpose AI assistant\n"
-        "- When listing agents: present them in a clean, organized format with names and descriptions\n\n"
-        
+        "- For generic greetings ('hi', 'hello'), respond directly — don't delegate\n"
+        "- For meta questions ('what agents do you have?', 'what can you do?'), respond directly with the list of available sub-agents and their descriptions — do NOT delegate these\n\n"
+
         "## Important\n"
-        "- ALWAYS call `get_user_agents` first on every new conversation to have up-to-date info\n"
-        "- Never make up agents that don't exist in the results\n"
         "- Be warm, helpful, and efficient — you're the user's concierge\n"
+        "- When delegating, let the sub-agent handle the response fully\n"
+        "- Never make up agents that don't exist as your sub-agents\n"
     ),
 )
 
