@@ -29,6 +29,16 @@
 		selectedModels = selectedModels.map((model) =>
 			$models.map((m) => m.id).includes(model) ? model : ''
 		);
+
+		// Auto-select Master Router Agent as default when no model is chosen
+		if (selectedModels.length === 1 && selectedModels[0] === '') {
+			const routerModel = $models.find(
+				(m) => m.id === 'agent:master-router' || m.id === 'a2a-agent-master-router'
+			);
+			if (routerModel) {
+				selectedModels = [routerModel.id];
+			}
+		}
 	}
 </script>
 

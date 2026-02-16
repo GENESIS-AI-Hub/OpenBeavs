@@ -440,6 +440,45 @@ async def lifespan(app: FastAPI):
     if LICENSE_KEY:
         get_license_data(app, LICENSE_KEY)
 
+    # Auto-register the Master Router Agent if not already present
+    try:
+        from open_webui.models.agents import Agents
+        router_agent = Agents.get_agent_by_id("master-router")
+        if not router_agent:
+            router_url = os.environ.get("MASTER_ROUTER_URL", "http://localhost:8081")
+            log.info(f"[STARTUP] Registering Master Router Agent at {router_url}")
+            Agents.insert_new_agent(
+                id="master-router",
+                name="Master Router",
+                description=(
+                    "The intelligent front door of GENESIS AI Hub. "
+                    "Automatically routes your conversations to the most "
+                    "appropriate specialist agent, or answers directly."
+                ),
+                url=router_url,
+                endpoint=router_url,
+                version="1.0.0",
+                capabilities={"routing": True, "text": True},
+                skills=[
+                    {
+                        "id": "agent-routing",
+                        "name": "Agent Routing",
+                        "description": "Discovers and routes to specialist agents based on user intent",
+                    },
+                    {
+                        "id": "general-assistant",
+                        "name": "General Assistant",
+                        "description": "Answers general questions when no specialist is available",
+                    },
+                ],
+                profile_image_url="/static/favicon.png",
+            )
+            log.info("[STARTUP] Master Router Agent registered successfully")
+        else:
+            log.info("[STARTUP] Master Router Agent already registered")
+    except Exception as e:
+        log.warning(f"[STARTUP] Could not register Master Router Agent: {e}")
+
     asyncio.create_task(periodic_usage_pool_cleanup())
     yield
 

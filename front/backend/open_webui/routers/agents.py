@@ -56,6 +56,28 @@ class SendMessageToAgentForm(BaseModel):
 
 
 ############################
+# GetUserAgents (for Router Agent)
+############################
+
+
+@router.get("/user-agents")
+async def get_user_installed_agents(user=Depends(get_verified_user)):
+    """Get all active agents formatted for the router agent to discover specialists"""
+    agents = Agents.get_agents()
+    return [
+        {
+            "id": agent.id,
+            "name": agent.name,
+            "description": agent.description,
+            "skills": agent.skills,
+            "capabilities": agent.capabilities,
+            "endpoint": agent.endpoint or agent.url,
+        }
+        for agent in agents
+    ]
+
+
+############################
 # GetAgents
 ############################
 
