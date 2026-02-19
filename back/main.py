@@ -603,10 +603,11 @@ def generate_agent_response(user_message: str, agent: dict) -> str:
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
 
 if os.path.isdir(FRONTEND_DIR):
-    # Serve static assets (JS, CSS, images, etc.)
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-    app.mount("/_app", StaticFiles(directory=os.path.join(FRONTEND_DIR, "_app")), name="svelte-app")
-    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+    # Mount known SvelteKit subdirectories if they exist
+    for subdir, mount_name in [("_app", "svelte-app"), ("assets", "assets")]:
+        subdir_path = os.path.join(FRONTEND_DIR, subdir)
+        if os.path.isdir(subdir_path):
+            app.mount(f"/{subdir}", StaticFiles(directory=subdir_path), name=mount_name)
 
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
@@ -615,4 +616,3 @@ if os.path.isdir(FRONTEND_DIR):
         if os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
-

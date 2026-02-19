@@ -27,5 +27,6 @@ COPY back/ .
 # Copy built frontend into backend's 'frontend' directory
 COPY --from=frontend-build /app/front/build ./frontend
 
-# Cloud Run sets $PORT automatically
+# Cloud Run sets $PORT automatically (default 8080)
+ENV PORT=8080
 CMD uvicorn main:app --host 0.0.0.0 --port $PORT
