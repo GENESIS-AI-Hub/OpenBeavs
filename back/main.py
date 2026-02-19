@@ -1,11 +1,14 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Any
 import uuid
 from datetime import datetime
 import asyncio
 import json
+import os
 
 # JSON-RPC imports
 from jsonrpcserver import method, Result, Success, Error as JSONRPCError
@@ -593,3 +596,23 @@ def generate_agent_response(user_message: str, agent: dict) -> str:
         return random.choice(response_templates)
     else:
         return f"I'm {agent['name']}. You said: '{user_message}'. How may I assist you?"
+
+
+# --- Static file serving for frontend ---
+# The frontend build output is copied into the container at /app/frontend
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
+
+if os.path.isdir(FRONTEND_DIR):
+    # Serve static assets (JS, CSS, images, etc.)
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+    app.mount("/_app", StaticFiles(directory=os.path.join(FRONTEND_DIR, "_app")), name="svelte-app")
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        """SPA catch-all: serve index.html for any unmatched routes"""
+        file_path = os.path.join(FRONTEND_DIR, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+

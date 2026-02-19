@@ -7,8 +7,6 @@ steps:
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
   - '-t'
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
-  - '-f'
-  - 'Dockerfile'
   - '.'
 
 # Push the image to Artifact Registry
