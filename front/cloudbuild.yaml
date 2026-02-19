@@ -1,11 +1,10 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
+  dir: 'front'
   args:
   - 'build'
   - '-t'
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
-  - '-f'
-  - 'Dockerfile'
   - '.'
 options:
   logging: CLOUD_LOGGING_ONLY
