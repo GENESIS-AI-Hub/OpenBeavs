@@ -322,6 +322,7 @@ webui.db*
 uploads/
 cache/
 vector_db/
+test/
 
 # Docker and deployment files - may want to customize these
 docker-compose*.yaml

@@ -4,7 +4,7 @@ FROM node:20-slim AS build
 WORKDIR /app
 
 # Install dependencies first (layer caching)
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
 # Copy source and build
@@ -12,20 +12,16 @@ COPY . .
 RUN npm run build
 
 # ---- Production Stage ----
-FROM nginx:alpine
+FROM node:20-slim
 
-# Copy built static files
-COPY --from=build /app/build /usr/share/nginx/html
+WORKDIR /app
 
-# SPA fallback: route all requests to index.html
-RUN echo 'server { \
-    listen 8080; \
-    location / { \
-        root /usr/share/nginx/html; \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# Copy the built output from the build stage
+COPY --from=build /app/build ./build
+COPY --from=build /app/package.json ./
+COPY --from=build /app/node_modules ./node_modules
 
 EXPOSE 8080
+ENV PORT=8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "build"]
