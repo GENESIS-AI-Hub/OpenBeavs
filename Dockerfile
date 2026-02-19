@@ -1,10 +1,21 @@
-# ---- Stage 1: Build Frontend & Copy to Backend ----
+# ---- Stage 1: Install Python deps (heaviest layer, cached aggressively) ----
+FROM python:3.11-slim AS python-deps
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/backend
+COPY front/backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ---- Stage 2: Build Frontend & Copy to Backend ----
 # Mirrors: cd front && npm run build:copy
 FROM node:20-slim AS frontend-build
 
 WORKDIR /app/front
 
-# Install dependencies
+# Install dependencies (cached unless package.json changes)
 COPY front/package.json front/package-lock.json ./
 RUN npm install
 
@@ -15,27 +26,28 @@ COPY front/ .
 ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build:copy
 
-# ---- Stage 2: Open WebUI Backend ----
+# ---- Stage 3: Final Image ----
 # Mirrors: cd front/backend && sh start.sh
 FROM python:3.11-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ libffi-dev curl \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
 
-# Install Python dependencies
-COPY front/backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy pre-installed Python packages from Stage 1
+COPY --from=python-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=python-deps /usr/local/bin /usr/local/bin
 
-# Copy backend (open_webui/, start.sh, etc.) from Stage 1
-# This includes backend/static/ with the built frontend
+# Copy backend source
 COPY --from=frontend-build /app/front/backend/open_webui ./open_webui
-COPY --from=frontend-build /app/front/backend/static ./static
 COPY --from=frontend-build /app/front/backend/start.sh ./start.sh
 
-# Copy package.json so env.py can read the version
+# Copy built frontend (from build:copy)
+COPY --from=frontend-build /app/front/backend/static ./static
+
+# Copy package.json for version info
 COPY front/package.json /app/package.json
 
 # Create data directory

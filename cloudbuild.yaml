@@ -1,23 +1,39 @@
 steps:
-# Build the combined image (frontend + backend)
+# Step 1: Pull previous image for Docker layer cache
 - name: 'gcr.io/cloud-builders/docker'
+  id: 'pull-cache'
+  args:
+  - 'pull'
+  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
+  allowFailure: true
+
+# Step 2: Build with cache from previous image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build'
+  waitFor: ['pull-cache']
   args:
   - 'build'
+  - '--cache-from'
+  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
   - '-t'
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
   - '-t'
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
   - '.'
 
-# Push the image to Artifact Registry
+# Step 3: Push image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
+  id: 'push'
+  waitFor: ['build']
   args:
   - 'push'
   - '--all-tags'
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend'
 
-# Deploy to Cloud Run with enough resources for the heavy Open WebUI backend
+# Step 4: Deploy to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: 'deploy'
+  waitFor: ['push']
   args:
   - 'gcloud'
   - 'run'
@@ -40,3 +56,4 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
