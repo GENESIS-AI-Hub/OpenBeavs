@@ -1,10 +1,36 @@
 steps:
+# Build the Docker image
 - name: 'gcr.io/cloud-builders/docker'
   dir: 'front'
   args:
   - 'build'
   - '-t'
+  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
+  - '-t'
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
   - '.'
+
+# Push the image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'push'
+  - '--all-tags'
+  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend'
+
+# Deploy to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args:
+  - 'gcloud'
+  - 'run'
+  - 'deploy'
+  - 'openbeavs-deploy-test'
+  - '--image'
+  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
+  - '--region'
+  - 'us-west1'
+  - '--platform'
+  - 'managed'
+  - '--allow-unauthenticated'
+
 options:
   logging: CLOUD_LOGGING_ONLY
