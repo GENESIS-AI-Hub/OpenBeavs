@@ -15,12 +15,12 @@ RUN npm run build
 # ---- Stage 2: Open WebUI Backend ----
 FROM python:3.11-slim
 
-WORKDIR /app/backend
-
 # Install system dependencies for Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ libffi-dev \
+    gcc g++ libffi-dev curl \
     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/backend
 
 # Install Python dependencies
 COPY front/backend/requirements.txt .
@@ -29,8 +29,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the Open WebUI backend
 COPY front/backend/ .
 
-# Copy built frontend into backend/static (where Open WebUI expects it)
-COPY --from=frontend-build /app/build ./static
+# Copy built frontend to /app/build (where FRONTEND_BUILD_DIR expects it)
+# env.py: BASE_DIR = BACKEND_DIR.parent = /app
+# env.py: FRONTEND_BUILD_DIR = BASE_DIR / "build" = /app/build
+COPY --from=frontend-build /app/build /app/build
 
 # Make start.sh executable
 RUN chmod +x start.sh
@@ -38,5 +40,8 @@ RUN chmod +x start.sh
 # Cloud Run sets $PORT (default 8080)
 ENV PORT=8080
 ENV ENV=prod
+ENV WEBUI_AUTH=false
+
+EXPOSE 8080
 
 CMD ["bash", "start.sh"]

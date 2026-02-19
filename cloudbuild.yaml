@@ -16,7 +16,7 @@ steps:
   - '--all-tags'
   - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend'
 
-# Deploy to Cloud Run
+# Deploy to Cloud Run with enough resources for the heavy Open WebUI backend
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   args:
   - 'gcloud'
@@ -30,6 +30,13 @@ steps:
   - '--platform'
   - 'managed'
   - '--allow-unauthenticated'
+  - '--memory'
+  - '2Gi'
+  - '--cpu'
+  - '2'
+  - '--timeout'
+  - '600'
+  - '--startup-cpu-boost'
 
 options:
   logging: CLOUD_LOGGING_ONLY
