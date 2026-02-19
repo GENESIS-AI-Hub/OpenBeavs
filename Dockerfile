@@ -1,7 +1,7 @@
 # ---- Stage 1: Build Frontend ----
 FROM node:20-slim AS frontend-build
 
-WORKDIR /app/front
+WORKDIR /app
 
 # Install dependencies
 COPY front/package.json front/package-lock.json ./
@@ -12,21 +12,31 @@ COPY front/ .
 ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 
-# ---- Stage 2: Backend + Frontend ----
-FROM python:3.9-slim
+# ---- Stage 2: Open WebUI Backend ----
+FROM python:3.11-slim
 
-WORKDIR /app
+WORKDIR /app/backend
+
+# Install system dependencies for Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY back/requirements.txt .
+COPY front/backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend source
-COPY back/ .
+# Copy the Open WebUI backend
+COPY front/backend/ .
 
-# Copy built frontend into backend's 'frontend' directory
-COPY --from=frontend-build /app/front/build ./frontend
+# Copy built frontend into backend/static (where Open WebUI expects it)
+COPY --from=frontend-build /app/build ./static
 
-# Cloud Run sets $PORT automatically (default 8080)
+# Make start.sh executable
+RUN chmod +x start.sh
+
+# Cloud Run sets $PORT (default 8080)
 ENV PORT=8080
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+ENV ENV=prod
+
+CMD ["bash", "start.sh"]
