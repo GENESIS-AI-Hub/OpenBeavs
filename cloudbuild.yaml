@@ -36,7 +36,7 @@ steps:
   - '2'
   - '--timeout'
   - '600'
-  - '--startup-cpu-boost'
+  - '--cpu-boost'
 
 options:
   logging: CLOUD_LOGGING_ONLY
