@@ -325,5 +325,4 @@ vector_db/
 
 # Docker and deployment files - may want to customize these
 docker-compose*.yaml
-Dockerfile*
 kubernetes/
