@@ -3,8 +3,9 @@ steps:
   args:
   - 'build'
   - '-t'
-  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs/openbeavs-deploy-test:latest'
+  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
   - '-f'
-  - 'Dockerfile' # Adjust path if Dockerfile is in 'front/'
+  - 'Dockerfile'
+  - '.'
 options:
   logging: CLOUD_LOGGING_ONLY
