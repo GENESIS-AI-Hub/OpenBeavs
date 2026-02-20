@@ -41,6 +41,12 @@ COPY --from=frontend-build /app/front/backend/static ./static
 # Copy package.json so env.py can read the app version
 COPY front/package.json /app/package.json
 
+# Copy CHANGELOG.md — env.py reads it from two locations:
+# 1. Direct path at /app/CHANGELOG.md
+# 2. Via pkgutil.get_data("open_webui", ...) → /app/backend/open_webui/CHANGELOG.md
+COPY front/CHANGELOG.md /app/CHANGELOG.md
+COPY front/CHANGELOG.md /app/backend/open_webui/CHANGELOG.md
+
 # Create writable data directory for SQLite DB and migrations
 RUN mkdir -p /app/backend/data
 
