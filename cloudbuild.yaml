@@ -7,7 +7,9 @@ steps:
       - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
     allowFailure: true
 
-  # Step 2: Build from front/ (where the Dockerfile lives)
+  # Step 2: Build from repo root using the root Dockerfile
+  # This builds the SvelteKit frontend (npm run build:copy) and bundles
+  # it with the Python/uvicorn backend into a single image.
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build'
     waitFor: ['pull-cache']
@@ -19,9 +21,9 @@ steps:
       - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
       - '-t'
       - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
-      - './front'
+      - '.'
 
-  # Step 3: Push image to Artifact Registry
+  # Step 3: Push both tags to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push'
     waitFor: ['build']
@@ -48,7 +50,7 @@ steps:
       - '--cpu=4'
       - '--port=8080'
       - '--timeout=600'
-      - '--set-env-vars=HOST=0.0.0.0'
+      - '--set-env-vars=HOST=0.0.0.0,WEBUI_SECRET_KEY=change-me-in-prod,OFFLINE_MODE=true,RAG_EMBEDDING_MODEL_AUTO_UPDATE=false,RAG_RERANKING_MODEL_AUTO_UPDATE=false,ENV=prod'
 
 options:
   logging: CLOUD_LOGGING_ONLY
