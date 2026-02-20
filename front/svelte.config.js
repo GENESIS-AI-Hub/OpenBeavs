@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-node';
+import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -7,9 +7,11 @@ const config = {
 	// for more information about preprocessors
 	preprocess: vitePreprocess(),
 	kit: {
-		// Using adapter-node for Cloud Run deployment
+		// Backend serves the built static files
 		adapter: adapter({
-			out: 'build'
+			pages: 'build',
+			assets: 'build',
+			fallback: 'index.html'
 		})
 	},
 	vitePlugin: {

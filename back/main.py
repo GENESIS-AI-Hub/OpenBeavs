@@ -593,3 +593,5 @@ def generate_agent_response(user_message: str, agent: dict) -> str:
         return random.choice(response_templates)
     else:
         return f"I'm {agent['name']}. You said: '{user_message}'. How may I assist you?"
+
+

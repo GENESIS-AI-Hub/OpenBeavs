@@ -1,0 +1,58 @@
+steps:
+  # Step 1: Pull previous image for Docker layer cache
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-cache'
+    args:
+      - 'pull'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
+    allowFailure: true
+
+  # Step 2: Build from repo root using the root Dockerfile
+  # This builds the SvelteKit frontend (npm run build:copy) and bundles
+  # it with the Python/uvicorn backend into a single image.
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
+    waitFor: ['pull-cache']
+    args:
+      - 'build'
+      - '--cache-from'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
+      - '.'
+
+  # Step 3: Push both tags to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push'
+    waitFor: ['build']
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend'
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
+    waitFor: ['push']
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'openbeavs-deploy-test'
+      - '--image=us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
+      - '--region=us-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--execution-environment=gen2'
+      - '--memory=8Gi'
+      - '--cpu=4'
+      - '--port=8080'
+      - '--timeout=600'
+      - '--set-env-vars=HOST=0.0.0.0,WEBUI_SECRET_KEY=change-me-in-prod,OFFLINE_MODE=true,ENV=prod,RAG_EMBEDDING_MODEL_AUTO_UPDATE=false,RAG_RERANKING_MODEL_AUTO_UPDATE=false,BYPASS_EMBEDDING_AND_RETRIEVAL=true,BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL=true,WHISPER_MODEL_AUTO_UPDATE=false'
+      - '--cpu-boost'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
