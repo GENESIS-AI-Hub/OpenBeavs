@@ -1,58 +1,55 @@
 steps:
-# Step 1: Pull previous image for Docker layer cache
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'pull-cache'
-  args:
-  - 'pull'
-  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
-  allowFailure: true
+  # Step 1: Pull previous image for Docker layer cache
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-cache'
+    args:
+      - 'pull'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
+    allowFailure: true
 
-# Step 2: Build with cache from previous image
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'build'
-  waitFor: ['pull-cache']
-  args:
-  - 'build'
-  - '--cache-from'
-  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
-  - '-t'
-  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
-  - '-t'
-  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
-  - '.'
+  # Step 2: Build from front/ (where the Dockerfile lives)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
+    waitFor: ['pull-cache']
+    args:
+      - 'build'
+      - '--cache-from'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:latest'
+      - './front'
 
-# Step 3: Push image to Artifact Registry
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'push'
-  waitFor: ['build']
-  args:
-  - 'push'
-  - '--all-tags'
-  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend'
+  # Step 3: Push image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push'
+    waitFor: ['build']
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend'
 
-# Step 4: Deploy to Cloud Run
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  id: 'deploy'
-  waitFor: ['push']
-  args:
-  - 'gcloud'
-  - 'run'
-  - 'deploy'
-  - 'openbeavs-deploy-test'
-  - '--image'
-  - 'us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
-  - '--region'
-  - 'us-west1'
-  - '--platform'
-  - 'managed'
-  - '--allow-unauthenticated'
-  - '--memory'
-  - '4Gi'
-  - '--cpu'
-  - '2'
-  - '--timeout'
-  - '600'
-  - '--cpu-boost'
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
+    waitFor: ['push']
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'openbeavs-deploy-test'
+      - '--image=us-west1-docker.pkg.dev/osu-genesis-hub/cloud-run-source-deploy/openbeavs-frontend:$COMMIT_SHA'
+      - '--region=us-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--execution-environment=gen2'
+      - '--memory=8Gi'
+      - '--cpu=4'
+      - '--port=8080'
+      - '--timeout=600'
+      - '--set-env-vars=HOST=0.0.0.0,WEBUI_PORT=8080,PYTHONUNBUFFERED=1,WEBUI_AUTH=True,DATA_DIR=/tmp,HF_HOME=/tmp/cache,SENTENCE_TRANSFORMERS_HOME=/tmp/cache,ENABLE_RAG_WEB_SEARCH=False,ENABLE_RAG_LOCAL_DOCS=False,HF_HUB_DISABLE_PROGRESS_BARS=1'
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
