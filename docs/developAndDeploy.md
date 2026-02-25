@@ -1,7 +1,7 @@
 # OpenBeavs Deployment & Contribution Guide
 **Team #043 | CS Capstone**
 
-This document outlines the standard development lifecycle for the OpenBeavs platform. To ensure code stability and maintain a reliable production environment on Google Cloud Run, all developers (Rohan, James, Minsu, John) must adhere to this workflow.
+This document outlines the standard development lifecycle for the OpenBeavs platform. To ensure code stability and maintain a reliable production environment on Google Cloud Run, all developers must adhere to this workflow.
 
 ## 1. Publish a New Git Branch
 Direct commits to the `main` branch are restricted. All new features, bug fixes, or documentation updates must be done on a dedicated branch.
