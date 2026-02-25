@@ -1,6 +1,5 @@
 # Contributing Guide
-How to set up, code, test, review, and release so contributions meet our Definition
-of Done.
+How to set up, code, test, review, and release so contributions meet our Definition of Done.
 
 ## Code of Conduct
 ### 1. Our Professional Pledge
@@ -34,15 +33,16 @@ For issues that arise within the team, we recommend a simple escalation path:
 2.  **Team Escalation:** If the issue persists or you are not comfortable with direct communication, immediately raise the concern to the team's designated **Project Manager (PM)**. The PM is responsible for mediating the conflict.
 3.  **Capstone Escalation (Official):** If the conflict involves the PM, or if the mediation process fails, the issue must be formally escalated according to the **CS Capstone Handbook**. This typically means contacting your faculty capstone instructor or advisor.
 
+---
+
 ## Getting Started
-List prerequisites, setup steps, environment variables/secrets handling, and how to
-run the app locally.
+List prerequisites, setup steps, environment variables/secrets handling, and how to run the app locally.
 
 ### Prerequisites
 
-*   [Docker](https://www.docker.com/)
-*   [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
-*   [Node.js and npm](https://nodejs.org/)
+* [Docker](https://www.docker.com/)
+* [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+* [Node.js and npm](https://nodejs.org/)
 
 ### Running the app Locally
 
@@ -66,16 +66,22 @@ run the app locally.
 
 For detailed setup and development instructions for the OpenBeavs frontend, please refer to `front/README.md`.
 
+---
+
 ## Branching & Workflow
 Our workflow is GitFlow.
-Default branch is `main`
+Default branch is `main`.
 Branch naming should be simple and to the point, creating a new branch for a new feature.
-- Examples: `agent-registration-hub-not-found-fix`, `hub-div-center-fix`
+* Examples: `feature/agent-registration`, `bugfix/hub-div-center`
 Rebase when bringing in lots of changes at once, but try to avoid. Standard procedure is merge.
-After merging a branch, close/delete feature branch.
+After merging a branch, close/delete the feature branch.
+
+---
 
 ## Issues & Planning
-To file an issue, create a ticket in our GitHub projects (link here). You are required to provide a general estimation of the problem size using t-shirt size standard. Triage will be handled by assigning to the project member closest to the issues domain.
+To file an issue, create a ticket in our GitHub projects. You are required to provide a general estimation of the problem size using the t-shirt size standard. Triage will be handled by assigning the ticket to the project member closest to the issue's domain.
+
+---
 
 ## Commit Messages
 Adopting a standard convention is a great practice, especially since the **OpenBeavs** code is public. We will use a simplified version of **Conventional Commits**. This convention makes the project history clean, aids in debugging, and can even be used to automatically generate changelogs.
@@ -89,10 +95,8 @@ The simple format to follow is:
 | Component | Purpose | Examples |
 | :--- | :--- | :--- |
 | **`<type>`** (Required) | A tag that indicates *what kind* of change this is. | `feat`, `fix`, `chore`, `docs`, `style` |
-| **`(<scope>)`** (Optional) | The system part that the change affects (e.g., frontend, auth). | `(frontend)`, `(backend-registry)`, `(auth)` |
+| **`(<scope>)`** (Optional) | The system part that the change affects. | `(frontend)`, `(backend-registry)`, `(auth)` |
 | **`<subject>`** (Required) | A short, imperative description of the change (less than 50 characters). | "add MS SSO login route", "center chat bubble text" |
-
----
 
 ### Recommended `<type>` List
 
@@ -100,74 +104,85 @@ The simple format to follow is:
 | :--- | :--- |
 | **`feat`** | A new feature for the user (e.g., implementing persistent chat history). |
 | **`fix`** | A bug fix (e.g., fixing a UI button alignment). |
-| **`chore`** | Routine tasks that don't change production code (e.g., updating dependencies, build config). |
-| **`docs`** | Changes to documentation (e.g., `README.md`, comments, project wiki). |
-| **`style`** | Code formatting changes (e.g., semicolons, white-space, linter rules). |
-| **`refactor`** | A change that neither fixes a bug nor adds a feature (e.g., cleaning up legacy code). |
-
----
-
-### Examples
-
-| Category | Example Commit Message | Purpose |
-| :--- | :--- | :--- |
-| **New Feature (`feat`)** | `feat(auth): implement MS SSO login route` | Adds the core authentication requirement. |
-| **Bug Fix (`fix`)** | `fix(frontend): adjust message display for mobile responsiveness` | Fixes a styling bug on smaller screens. |
-| **Routine Task (`chore`)** | `chore(deps): update all package dependencies` | Keeps the project's dependencies up-to-date. |
-| **Refactoring (`refactor`)** | `refactor(backend): consolidate agent routing logic into service class` | Improves the internal structure without changing behavior. |
+| **`chore`** | Routine tasks that don't change production code (e.g., updating dependencies). |
+| **`docs`** | Changes to documentation (e.g., `README.md`, comments). |
+| **`style`** | Code formatting changes (e.g., semicolons, white-space). |
+| **`refactor`** | A change that neither fixes a bug nor adds a feature. |
 
 ### Referencing and Closing Issues
 
 To automatically close an issue tracked on your project board or GitHub repository (e.g., Issue **#22** for RBAC), you must use one of the following keywords followed by the issue number in the commit message **body** or **footer**.
 
+---
 
 ## Code Style, Linting & Formatting
-Name the formatter/linter, config file locations, and the exact commands to
-check/fix locally.
 
 ### Front end:
 For linting and formatting:
-- Commands:
-    - `npm run lint` - Lints frontend, types, and backend
-    - `npm run lint:frontend` - Lints frontend with ESLint
-    - `npm run format` - Formats code with Prettier
+* Commands:
+    * `npm run lint` - Lints frontend, types, and backend
+    * `npm run lint:frontend` - Lints frontend with ESLint
+    * `npm run format` - Formats code with Prettier
   
 ### Back end:
-- Formatter: [Ruff](https://docs.astral.sh/ruff/)
-- Config path: 
-- Commands:
-    - `ruff format` to lint
+* Formatter: [Ruff](https://docs.astral.sh/ruff/)
+* Config path: [Insert path if applicable]
+* Commands:
+    * `ruff check .` to lint
+    * `ruff format` to format
+
+---
 
 ## Testing
 @Nam Long Tran
+
+---
 
 ## Pull Requests & Reviews
 
 | Requirement | Details |
 | :--- | :--- |
-| **PR Template** | Mandatory. Must include: **Description** (what the change does), **Related Issues** (which issue(s) this closes/references), **Testing Notes** (how a reviewer can test), and **Screenshots/Video** (if a UI change). |
-| **Checklist** | Required items before marking 'Ready for Review': `[ ] Code meets acceptance criteria`, `[ ] All automated tests pass`, `[ ] Documentation/API docs updated (if applicable)`, `[ ] Self-reviewed for style/logic errors`. |
-| **Size Limits** | Target a maximum of **400-500 lines of code change**. If a change is larger, work with your team to break it down into smaller, logical PRs to expedite review. |
-| **Reviewer Expectations** | Reviewers must check for **functional correctness**, adherence to the **Tech Stack** (e.g., React.js, GCP preferences), security concerns, and code style. Reviews should be **constructive and objective**. |
-| **Approval Rules** | A PR requires **one (1) approval** from another team member before it can be merged to the main branch. The submitter cannot approve their own PR. |
-| **Status Checks** | Required status checks (to be configured in GitHub): **All Unit Tests Pass** and **Code Linter/Style Check Passes**. |
+| **PR Template** | Mandatory. Must include: **Description**, **Related Issues**, **Testing Notes**, and **Screenshots/Video** (if UI). |
+| **Checklist** | Items before 'Ready for Review': `[ ] Meets acceptance criteria`, `[ ] Tests pass`, `[ ] Docs updated`, `[ ] Self-reviewed`. |
+| **Size Limits** | Target a maximum of **400-500 lines of code change**. Break larger changes into smaller, logical PRs. |
+| **Reviewer Expectations** | Check for **functional correctness**, adherence to the **Tech Stack**, security concerns, and code style. |
+| **Approval Rules** | Requires **one (1) approval** from another team member before merging to `main`. Cannot approve your own PR. |
+| **Status Checks** | Required status checks: **All Unit Tests Pass** and **Code Linter/Style Check Passes**. |
 
 ---
 
 ## CI/CD
-Link to pipeline definitions, list mandatory jobs, how to view logs/re-run jobs,
-and what must pass before merge/release.
-@Rohan
+Our Continuous Integration and Continuous Deployment (CI/CD) pipeline is fully automated via Google Cloud Build, pulling from definitions in our `cloudbuild.yaml` file. 
+
+Merging code into the `main` branch automatically triggers the deployment process. **No manual execution of local deployment scripts is required for standard releases.**
+
+### Pipeline Execution Flow
+The pipeline executes on a Google Cloud build machine within the `osu-genesis-hub` project and automatically handles deploying both the frontend and backend to Cloud Run:
+
+1. **Pull Cache:** Pulls the previous Docker image (`openbeavs-frontend:latest`) from Google Artifact Registry to use as a layer cache, optimizing build speeds.
+2. **Unified Build:** Executes a build from the repository root. This step compiles the SvelteKit frontend and bundles it alongside the Python/FastAPI backend into a **single, unified Docker container**.
+3. **Push to Artifact Registry:** Tags the newly built image with the GitHub commit SHA and `latest`, then pushes it to Artifact Registry (`us-west1`).
+4. **Deploy to Cloud Run:** Deploys the unified image to the Cloud Run service (`openbeavs-deploy-test`), injecting the required production environment variables.
+
+### Mandatory Requirements for Merge
+Before a PR can be merged to `main` (which triggers the automated deployment pipeline), the following conditions must be met:
+* All GitHub Action status checks (Linters, Unit Tests) must pass.
+* At least one approving review from a team member.
+
+### Viewing Logs & Troubleshooting
+If an automatic deployment fails, the DevOps Lead or a team member with GCP access should navigate to **Cloud Build Logs** in the Google Cloud Console. This will identify the exact point of failure (e.g., a linting error, build failure, or deployment timeout). If a rollback is necessary, it can be executed directly from the Cloud Run revisions dashboard.
+
+---
 
 ## Security & Secrets
 
 | Policy | Standard |
 | :--- | :--- |
-| **Vulnerability Reporting** | Immediately report any security concern to the entire team via a private channel (e.g., email chain) and create a **private, high-priority GitHub Issue** labeled `Security`. |
-| **Prohibited Patterns** | **NEVER hard-code secrets** (API keys, database credentials, Microsoft SSO client secrets) directly into the code base, even in environment files committed to Git. This is critical as your code is **public**. |
-| **Secrets Management** | All secrets must be loaded via environment variables from a secure source (e.g., a **`.env`** file that is listed in **`.gitignore`** and manually managed/shared, or a proper service like **GCP Secret Manager**). |
-| **Dependency Updates** | Dependencies should be reviewed and updated **at the start of every sprint** (weekly/bi-weekly). Use tools like `npm audit` or **Dependabot** (GitHub native) to scan for known vulnerabilities. |
-| **Scanning Tools** | Implement a linter and static analysis tool (e.g., **ESLint** for JavaScript) to check for common security errors and bad practices. |
+| **Vulnerability Reporting** | Immediately report security concerns to the team and create a **private, high-priority GitHub Issue**. |
+| **Prohibited Patterns** | **NEVER hard-code secrets** (API keys, credentials) directly into the code base. |
+| **Secrets Management** | All secrets must be loaded via environment variables (e.g., a `.env` file in `.gitignore` or GCP Secret Manager). |
+| **Dependency Updates** | Review and update dependencies at the start of every sprint using tools like `npm audit` or Dependabot. |
+| **Scanning Tools** | Implement a linter and static analysis tool to check for common security errors. |
 
 ---
 
@@ -175,11 +190,11 @@ and what must pass before merge/release.
 
 | Artifact | Requirement |
 | :--- | :--- |
-| **`README.md`** | Must be updated before the **End of Term 1** milestone. Should cover: Project overview, setup instructions (local development), dependencies, and how to run tests. |
-| **`/docs`** | Create a `docs/` folder for long-form project documentation. Must include the **Agentic Services Registry** schema, major architectural decisions, and the **Code of Conduct**. |
-| **API References** | Use an automated tool (e.g., Swagger/OpenAPI) for the **Back-End Routing** API endpoints to document parameters, responses, and authentication methods. |
-| **`CHANGELOG.md`** | Required. This file should be generated using the information from the **Conventional Commits** during the release process. |
-| **Docstring/Comments** | All functions, classes, and complex logic blocks must have clear, concise docstrings (e.g., JSDoc for Node.js/React or docstrings for Python) explaining *what* they do, *why*, and listing parameters/returns. |
+| **`README.md`** | Must be updated before End of Term 1. Covers project overview, setup, dependencies, and testing. |
+| **`/docs`** | Folder for long-form project documentation (Registry schema, architectural decisions, Code of Conduct). |
+| **API References** | Use an automated tool (e.g., Swagger/OpenAPI) for the Back-End Routing API endpoints. |
+| **`CHANGELOG.md`** | Generated using information from Conventional Commits during the release process. |
+| **Docstrings** | All complex logic blocks must have clear docstrings (JSDoc/Python docstrings) explaining *what* and *why*. |
 
 ---
 
@@ -187,11 +202,11 @@ and what must pass before merge/release.
 
 | Step | Detail |
 | :--- | :--- |
-| **Versioning Scheme** | Use **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`. `PATCH` for bug fixes, `MINOR` for new features (`feat`), and `MAJOR` for breaking changes (e.g., changing the Agent Registry Spec). |
-| **Tagging** | Every successful deployment to the staging/production environment must be tagged in Git with the new version number (e.g., `git tag v1.0.0`). |
-| **Changelog Generation** | Automatically generate the `CHANGELOG.md` from the commit history using a script (or manual aggregation of `feat` and `fix` commits) for each release. |
-| **Packaging/Publishing** | Since **GCP is preferred**, deployment will likely involve containerization (e.g., Docker) and using **Cloud Run** or **App Engine**. The final package is the build artifact pushed to the cloud environment. |
-| **Rollback Process** | Rollback is achieved by immediately deploying the **previous stable Git tag** (version) to the hosting platform. |
+| **Versioning Scheme** | Use **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`. |
+| **Tagging** | Every successful deployment to production must be tagged in Git with the new version number. |
+| **Changelog Generation** | Automatically generate the `CHANGELOG.md` from the commit history for each release. |
+| **Packaging/Publishing** | The unified frontend/backend Docker container is built and pushed to GCP Artifact Registry via Cloud Build. |
+| **Rollback Process** | Achieved by reverting the Cloud Run service to the previous stable revision via the GCP Console. |
 
 ---
 
@@ -199,8 +214,8 @@ and what must pass before merge/release.
 
 | Channel | Detail |
 | :--- | :--- |
-| **Maintainer Contact** | The primary channel for urgent team questions and conflict resolution is the team's designated **Project Manager (PM)**. |
-| **Sponsor Contact** | For project requirements, feedback, or technical specs (e.g., API for FAIE), the point of contact is **John V. Sweet** via his **Email**. |
-| **Response Windows (Team)** | Aim for a **4-hour response window** during standard school hours (M-F, 9 am - 5 pm) for urgent team messages. |
-| **Response Windows (Sponsor)** | Team should prepare agenda items for the **Friday sprint meetings** with **John Sweet**. Reserve emails for critical questions or follow-up. |
-| **Where to Ask Questions** | **Technical:** Private team chat/Slack. **Requirements/Scope:** Friday Sponsor Meeting. **Conduct/Process:** The **CS Capstone Handbook** or your Faculty Advisor. |
+| **Maintainer Contact** | Primary channel for urgent team questions and conflict resolution is the Project Manager (PM). |
+| **Sponsor Contact** | For project requirements or technical specs, contact **John V. Sweet** via his Email. |
+| **Response Windows** | Aim for a 4-hour response window during standard school hours for urgent team messages. |
+| **Sponsor Meetings** | Prepare agenda items for Friday sprint meetings. Reserve emails for critical follow-up. |
+| **Where to Ask** | **Technical:** Private team chat. **Scope:** Friday Sponsor Meeting. **Process:** CS Capstone Handbook. |
