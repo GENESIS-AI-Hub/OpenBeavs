@@ -4,8 +4,6 @@ from pydantic import BaseModel
 from typing import List, Dict, Optional, Any
 import uuid
 from datetime import datetime
-import asyncio
-import json
 
 # JSON-RPC imports
 from jsonrpcserver import method, Result, Success, Error as JSONRPCError
@@ -211,7 +209,7 @@ class CreateChatRequest(BaseModel):
     agent_id: str
 
 
-class SendMessageRequest(BaseModel):
+class SendMessageBody(BaseModel):
     content: str
     files: Optional[List[dict]] = None
 
@@ -357,7 +355,7 @@ def get_messages(chat_id: str):
 
 
 @app.post("/chats/{chat_id}/messages", response_model=Message)
-def send_message(chat_id: str, message_request: SendMessageRequest):
+def send_message(chat_id: str, message_request: SendMessageBody):
     """Send a message to a chat and get a response"""
     if chat_id not in chats_db:
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -435,7 +433,7 @@ class RegisterAgentByUrlRequest(BaseModel):
 def register_agent_by_url(request_data: RegisterAgentByUrlRequest):
     """Register a new agent by fetching its .well-known/agent.json file"""
     import requests
-    from urllib.parse import urljoin, urlparse
+    from urllib.parse import urlparse
 
     agent_url = request_data.agent_url
 
@@ -504,7 +502,7 @@ def register_agent_by_url(request_data: RegisterAgentByUrlRequest):
 def fetch_agent_well_known(agent_url: str):
     """Fetch an agent's .well-known/agent.json file"""
     import requests
-    from urllib.parse import urljoin, urlparse
+    from urllib.parse import urlparse
 
     if not agent_url:
         raise HTTPException(status_code=400, detail="Agent URL is required")
@@ -553,7 +551,10 @@ def fetch_agent_well_known(agent_url: str):
 
 def generate_agent_response(user_message: str, agent: dict) -> str:
     """Generate response from an agent based on user message"""
-    import requests, uuid, random
+    import random
+    import uuid
+
+    import requests
 
     # If the agent has an endpoint, make an HTTP request to it
     if agent.get("endpoint"):
