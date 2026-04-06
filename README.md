@@ -142,35 +142,21 @@ gcloud auth configure-docker
 
 ## Team Roster/Contacts
 
-James Smith
-#: 5037138776
-email: smitjam2@oregonstate.edu , galavantinggeckoguy@gmail.com
-GH: gitJamoo
-
-Minsu Kim
-#: 971-297-4257
-Email: kimminsu@oregonstate.edu , minsteww26@gmail.com
-GH: minkim26
-
-Rohan Thapliyal
-#: 5035236168
-email: thapliyr@oregonstate.edu , rohanthapliyal2020@gmail.com
-GH: Rohanthap
-
-Long Tran
-#: 541 207 5609
-email: tranlon@oregonstate.edu
-GH: longtran921
-
-John Sweet
-#: 2135456760
-email: john.sweet@oregonstate.edu
-GH: jsweet8258
+| Name              | Role                    | Email                          | GitHub       |
+|-------------------|-------------------------|--------------------------------|--------------|
+| James Smith       | Developer / PM          | smitjam2@oregonstate.edu       | gitJamoo     |
+| Minsu Kim         | Developer               | kimminsu@oregonstate.edu       | minkim26     |
+| Rohan Thapliyal   | Developer / CI-CD       | thapliyr@oregonstate.edu       | Rohanthap    |
+| Long Tran         | Developer / QA          | tranlon@oregonstate.edu        | longtran921  |
+| John Sweet        | Sponsor / Stakeholder   | john.sweet@oregonstate.edu     | jsweet8258   |
 
 ## Contributing & Documentation
 
 - [Contributing Guide](./CONTRIBUTING.md)
+- [Security Policy](./SECURITY.md) — API key handling, vulnerability reporting, known risks
+- [Changelog](./CHANGELOG.md)
 - [Architecture & ADRs](./docs/)
+- [API Key Configuration](./apikeyconfig.md) — setting up Claude, ChatGPT, and Gemini agents locally
 - A2A documentation:
   - [A2A Quickstart](./front/A2A_QUICKSTART.md)
   - [A2A Implementation Summary](./front/A2A_IMPLEMENTATION_SUMMARY.md)

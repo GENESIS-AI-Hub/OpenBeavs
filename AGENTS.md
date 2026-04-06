@@ -466,6 +466,7 @@ and `env.py` for the full list):
 | James Smith    | Developer/PM      | smitjam2@oregonstate.edu       | gitJamoo     |
 | Minsu Kim      | Developer         | kimminsu@oregonstate.edu       | minkim26     |
 | Rohan Thapliyal | Developer / CI-CD | thapliyr@oregonstate.edu      | Rohanthap    |
+| Long Tran      | Developer / QA    | tranlon@oregonstate.edu        | longtran921  |
 | John Sweet     | Sponsor/Stakeholder | john.sweet@oregonstate.edu   | jsweet8258   |
 
 ---
