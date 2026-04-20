@@ -56,6 +56,32 @@ def get_secret(env_var_name: str, secret_id: str = None, default: str = ""):
 
 ####################################
 
+####################################
+# Chat Privacy / Encryption Config
+# (openbeavs-chat-privacy-architecture.md §1, §7)
+####################################
+
+# Enable AES-256 envelope encryption for chat content.
+# When true, chat records store ciphertext + encrypted DEK instead of plaintext JSON.
+ENABLE_CHAT_ENCRYPTION: bool = (
+    os.environ.get("ENABLE_CHAT_ENCRYPTION", "false").lower() == "true"
+)
+
+# Use GCP Cloud KMS as the key wrapping service (production).
+# When false, a local master key (ENCRYPTION_MASTER_KEY) is used instead (dev/CI).
+USE_GCP_KMS: bool = os.environ.get("USE_GCP_KMS", "false").lower() == "true"
+
+# GCP Cloud KMS settings — required when USE_GCP_KMS=true.
+GCP_KMS_LOCATION: str = os.environ.get("GCP_KMS_LOCATION", "us-west1")
+GCP_KMS_KEY_RING: str = os.environ.get("GCP_KMS_KEY_RING", "openbeavs-users")
+
+# Local dev master key (hex-encoded 32 bytes).
+# Generate: python -c "import secrets; print(secrets.token_hex(32))"
+# Required when ENABLE_CHAT_ENCRYPTION=true and USE_GCP_KMS=false.
+ENCRYPTION_MASTER_KEY: str = os.environ.get("ENCRYPTION_MASTER_KEY", "")
+
+####################################
+
 DOCKER = os.environ.get("DOCKER", "False").lower() == "true"
 
 # device type embedding models - "cpu" (default), "cuda" (nvidia gpu required) or "mps" (apple silicon) - choosing this right can lead to better performance
