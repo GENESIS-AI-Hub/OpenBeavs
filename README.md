@@ -1,8 +1,5 @@
-<!-- PLACEHOLDER: Replace the img src below with your banner once it's committed.
-     Suggested: copy .github-private/docs/Assets/Banner.png → docs/assets/banner.png
-     Then this path will work as-is. -->
 <div align="center">
-  <img src="./docs/assets/banner.png" width="100%" alt="OpenBeavs — AI Agent Platform for Oregon State University" />
+  <img src="https://github.com/OpenBeavs/.github/raw/main/profile/Banner.png" width="100%" alt="OpenBeavs — AI Agent Platform for Oregon State University" />
 </div>
 
 <div align="center">
@@ -18,7 +15,7 @@
 
 <!-- PLACEHOLDER: Add your live Cloud Run URL below (appears twice in this file).
      Find it: GCP Console → Cloud Run → service "openbeavs-deploy-test" (us-west1) → copy the URL. -->
-[**→ Try OpenBeavs Live**](https://PLACEHOLDER_CLOUD_RUN_URL) &nbsp;·&nbsp;
+[**→ Try OpenBeavs Live**](https://genesis.dev.oregonstate.edu/genesis-hub/embed-demo) &nbsp;·&nbsp;
 [View on GitHub](https://github.com/OpenBeavs/OpenBeavs) &nbsp;·&nbsp;
 [Report a Bug](https://github.com/OpenBeavs/OpenBeavs/issues)
 
@@ -59,9 +56,18 @@ It's a shared AI workspace where you **sign in with your OSU account** and insta
   <img
     src="./front/demo.gif"
     width="90%"
-    alt="Screen recording showing a user browsing the OpenBeavs agent registry, installing an OSU knowledge-base agent, and asking it a question about financial aid. The agent returns an accurate, sourced answer within seconds."
+    alt="Screen recording showing a user chatting with GPT 4."
   />
   <p><em>Browsing the agent registry and chatting with the OSU knowledge-base agent.</em></p>
+</div>
+
+<div align="center">
+  <a href="https://media.oregonstate.edu/media/t/1_2qvehzir">
+    <img src="https://cfvod.kaltura.com/p/1285941/sp/128594100/thumbnail/entry_id/1_2qvehzir/width/600" 
+         alt="Demo video showing the Oregon State Agent assist a user with a query" 
+         style="max-width: 100%;">
+  </a>
+  <p><i>This quick demo shows how the Oregon State Agent would assist users.</i></p>
 </div>
 
 <!-- PLACEHOLDER: Add 1-2 static screenshots below for more context.
@@ -79,7 +85,7 @@ It's a shared AI workspace where you **sign in with your OSU account** and insta
 
 | Option | Details |
 |--------|---------|
-| **Live deployment** | [**→ Open the app**](https://PLACEHOLDER_CLOUD_RUN_URL) — sign in with your OSU Microsoft account |
+| **Live deployment** | [**→ Open the app**](https://genesis.dev.oregonstate.edu/genesis-hub/embed-demo) — sign in with your OSU Microsoft account |
 | **Run locally** | See [Local Setup](#local-setup) below |
 | **OSU RAG Pipeline** | [github.com/OpenBeavs/OSU-RAG-Pipeline](https://github.com/OpenBeavs/OSU-RAG-Pipeline) |
 
