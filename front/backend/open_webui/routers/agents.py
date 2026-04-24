@@ -144,10 +144,14 @@ async def register_agent_by_url(
     if not agent_url.startswith(("http://", "https://")):
         agent_url = "https://" + agent_url
 
-    # Parse the URL and normalize it to just the domain for the well-known file
+    # If the URL already points to a well-known card, use it directly.
+    # Otherwise construct the standard path from the base domain.
     parsed_url = urlparse(agent_url)
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-    well_known_url = f"{base_url}/.well-known/agent.json"
+    if "/.well-known/" in agent_url:
+        well_known_url = agent_url
+    else:
+        well_known_url = f"{base_url}/.well-known/agent.json"
 
     try:
         response = requests.get(well_known_url, timeout=10)
@@ -230,10 +234,12 @@ async def fetch_agent_well_known(agent_url: str, user=Depends(get_verified_user)
     if not agent_url.startswith(("http://", "https://")):
         agent_url = "https://" + agent_url
 
-    # Parse the URL
     parsed_url = urlparse(agent_url)
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-    well_known_url = f"{base_url}/.well-known/agent.json"
+    if "/.well-known/" in agent_url:
+        well_known_url = agent_url
+    else:
+        well_known_url = f"{base_url}/.well-known/agent.json"
 
     try:
         response = requests.get(well_known_url, timeout=10)

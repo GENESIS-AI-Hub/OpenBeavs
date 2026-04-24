@@ -10,9 +10,12 @@
 		type HistoryMessage
 	} from '$lib/apis/chris';
 
+	import { showSidebar } from '$lib/stores';
+
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import Sparkles from '$lib/components/icons/Sparkles.svelte';
 	import ArrowUpCircle from '$lib/components/icons/ArrowUpCircle.svelte';
+	import MenuLines from '$lib/components/icons/MenuLines.svelte';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 
@@ -178,11 +181,25 @@
 </script>
 
 <!-- ── Layout ──────────────────────────────────────────────────────────────── -->
-<div class="h-screen max-h-[100dvh] w-full flex flex-col overflow-hidden">
-<div class="flex flex-col flex-1 overflow-hidden w-full max-w-3xl mx-auto px-4 pb-4 pt-8">
+<div
+	class="flex flex-col w-full h-screen max-h-[100dvh] transition-width duration-200 ease-in-out {$showSidebar
+		? 'md:max-w-[calc(100%-260px)]'
+		: ''} max-w-full overflow-hidden"
+>
+<div class="flex flex-col flex-1 overflow-hidden w-full max-w-3xl mx-auto px-4 pb-4 pt-4">
 
 	<!-- Header -->
 	<div class="flex items-center gap-2 mb-6">
+		<div class="{$showSidebar ? 'md:hidden' : ''} flex-none">
+			<button
+				id="sidebar-toggle-button"
+				class="cursor-pointer p-1.5 flex rounded-xl hover:bg-gray-100 dark:hover:bg-gray-850 transition"
+				on:click={() => showSidebar.set(!$showSidebar)}
+				aria-label="Toggle Sidebar"
+			>
+				<MenuLines />
+			</button>
+		</div>
 		<Sparkles className="w-6 h-6 text-blue-500" />
 		<h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Chris</h1>
 		<span class="text-sm text-gray-500 dark:text-gray-400">OpenBeavs AI Hub</span>
