@@ -161,7 +161,7 @@ async def register_agent_by_url(
         # Extract information from well-known format
         name = agent_data.get("name", "Unknown Agent")
         description = agent_data.get("description", "")
-        url = agent_data.get("url", base_url)
+        url = agent_data.get("url") or base_url
         version = agent_data.get("version", "1.0.0")
         capabilities = agent_data.get("capabilities", {})
         skills = agent_data.get("skills", [])

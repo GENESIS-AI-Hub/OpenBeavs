@@ -75,7 +75,7 @@ async def submit_registry_agent(
 
         name = agent_data.get("name", "Unknown Agent")
         description = agent_data.get("description", "")
-        url = agent_data.get("url", base_url)
+        url = agent_data.get("url") or base_url
         image_url = form_data.image_url or agent_data.get("image_url")
         tools = {
             "capabilities": agent_data.get("capabilities", {}),
