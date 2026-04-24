@@ -37,6 +37,27 @@ CHRIS_SYSTEM_PROMPT = (
     "or by answering directly when no agent fits."
 )
 
+# Used only for the direct-fallback path so Gemini never invents agent names in prose.
+_CHRIS_DIRECT_SYSTEM_PROMPT_BASE = (
+    "You are Chris, the OpenBeavs AI hub assistant. "
+    "You are answering the user directly — there is no agent being called right now. "
+    "NEVER invent or guess agent names. Only refer to agents that appear in the "
+    "INSTALLED AGENTS list below. If the list is empty, say the user has no agents installed."
+)
+
+
+def _build_direct_system_prompt(agents: list[AgentModel]) -> str:
+    """Build the direct-answer system prompt, injecting the real installed-agent list."""
+    if agents:
+        agent_lines = "\n".join(
+            f"- {a.name}" + (f": {a.description}" if a.description else "")
+            for a in agents
+        )
+        agent_section = f"\n\nINSTALLED AGENTS:\n{agent_lines}"
+    else:
+        agent_section = "\n\nINSTALLED AGENTS: none"
+    return _CHRIS_DIRECT_SYSTEM_PROMPT_BASE + agent_section
+
 
 class HistoryMessage(BaseModel):
     """A single turn in the conversation history."""
@@ -87,38 +108,49 @@ def _build_routing_prompt(user_message: str, agents: list[AgentModel]) -> str:
         f"skills={a.skills or []}"
         for a in agents
     )
+    valid_ids = ", ".join(repr(a.id) for a in agents)
     return (
-        f"You are a strict router. Below are installed agents and their skills.\n\n"
+        f"You are a strict router. The ONLY valid output values are listed below.\n\n"
+        f"VALID IDs (you may ONLY reply with one of these, or the word none):\n{valid_ids}\n\n"
         f"Agents:\n{agent_lines}\n\n"
         f'User message: "{user_message}"\n\n'
         "Task: decide whether one of the above agents is the RIGHT tool for this exact message.\n"
         "Rules:\n"
         "1. Only choose an agent if its skills or description SPECIFICALLY and CLEARLY match "
         "the user's intent — not just a vague overlap.\n"
-        "2. If the message is general conversation, a question Chris can answer directly, "
-        "or there is any doubt, reply with: none\n"
-        "3. Reply with ONLY the agent id string (exactly as shown after id=) or the word: none\n"
-        "4. No explanation, no punctuation, no quotes — just the id or the word none.\n"
+        "2. ALWAYS reply with none for: greetings, small talk, how-are-you, thanks, jokes, "
+        "general questions, anything Chris can answer directly, or any message where you are "
+        "not certain an agent is the right fit.\n"
+        "3. Reply with ONLY one of the exact id strings listed in VALID IDs above, or the word: none\n"
+        "4. Do NOT invent or guess any id. If the right id is not in the VALID IDs list, reply: none\n"
+        "5. No explanation, no punctuation, no quotes — just the id or the word none.\n"
         "Your answer:"
     )
 
 
 def _extract_text_from_a2a_response(response_data: dict) -> str:
-    """Pull the first text part out of an A2A JSON-RPC result."""
+    """Pull the first text part out of an A2A JSON-RPC result.
+
+    Handles two known A2A result shapes:
+      1. ``result.artifacts[0].parts[0].text`` (standard A2A)
+      2. ``result.parts[0].text`` (simplified agent responses)
+
+    Returns an empty string when the result is absent, empty, or contains no text.
+    """
     result = response_data.get("result", {})
     if not result:
         return ""
     # A2A result shape: { artifacts: [ { parts: [ { text: "..." } ] } ] }
-    artifacts = result.get("artifacts", [])
-    if artifacts:
-        parts = artifacts[0].get("parts", [])
-        if parts:
-            return parts[0].get("text", "")
+    artifacts = result.get("artifacts")
+    if artifacts is not None:
+        if artifacts and artifacts[0].get("parts"):
+            return artifacts[0]["parts"][0].get("text", "")
+        return ""
     # Fallback: some agents use result.parts directly
-    parts = result.get("parts", [])
-    if parts:
-        return parts[0].get("text", "")
-    return str(result)
+    parts = result.get("parts")
+    if parts is not None:
+        return parts[0].get("text", "") if parts else ""
+    return ""
 
 
 def _call_agent_a2a(agent: AgentModel, message: str) -> str:
@@ -196,6 +228,7 @@ async def chris_message(
 
     if installed_agents:
         routing_prompt = _build_routing_prompt(user_message, installed_agents)
+        valid_agent_ids = {a.id for a in installed_agents}
         try:
             routing_messages = [
                 {"role": "system", "content": CHRIS_SYSTEM_PROMPT},
@@ -205,13 +238,18 @@ async def chris_message(
             chosen_id = raw_decision.strip().strip('"').strip("'").lower()
             log.info(f"Chris routing decision: {chosen_id!r} (raw: {raw_decision!r})")
 
+            # Hard-validate: only accept IDs that actually exist in the installed set.
+            # Any hallucinated or off-list response is treated as "none".
             if chosen_id != "none":
-                selected_agent = next(
-                    (a for a in installed_agents if a.id == chosen_id), None
-                )
-                if selected_agent is None:
+                if chosen_id not in valid_agent_ids:
                     log.warning(
-                        f"Chris chose agent id {chosen_id!r} but it is not in installed agents."
+                        f"Chris returned {chosen_id!r} which is not a valid installed agent id "
+                        f"(valid: {valid_agent_ids}). Treating as none."
+                    )
+                    chosen_id = "none"
+                else:
+                    selected_agent = next(
+                        (a for a in installed_agents if a.id == chosen_id), None
                     )
         except Exception as e:
             log.warning(f"Chris routing decision failed, falling back to direct: {e}")
@@ -232,7 +270,7 @@ async def chris_message(
 
     # ── Step 2b: answer directly via Gemini ───────────────────────────────────
     direct_messages = [
-        {"role": "system", "content": CHRIS_SYSTEM_PROMPT},
+        {"role": "system", "content": _build_direct_system_prompt(installed_agents)},
         *history_messages,
         {"role": "user", "content": user_message},
     ]

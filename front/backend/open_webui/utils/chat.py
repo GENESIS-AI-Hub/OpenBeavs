@@ -93,16 +93,24 @@ async def _generate_chris_chat_completion(
         user=_FakeUser(),
     )
 
-    response_text = result.response or ""
+    agent_response = result.response or ""
+    chris_metadata = None
 
-    # Prefix the agent name if Chris routed to a specialist
     if result.routed_to and result.agent_name:
-        response_text = f"[{result.agent_name}] {response_text}"
+        # Announce routing, then show agent's reply
+        routing_prefix = f"*Got it, routing to **{result.agent_name}**...*\n\n"
+        response_text = routing_prefix + agent_response
+        chris_metadata = {
+            "routed_to": result.routed_to,
+            "agent_name": result.agent_name,
+        }
+    else:
+        response_text = agent_response
 
     if form_data.get("stream"):
         async def _stream():
             chunk_id = f"chatcmpl-{uuid.uuid4()}"
-            words = response_text.split()
+            words = response_text.split(" ")
             for i, word in enumerate(words):
                 chunk = {
                     "id": chunk_id,
@@ -119,12 +127,16 @@ async def _generate_chris_chat_completion(
                 }
                 yield f"data: {json.dumps(chunk)}\n\n"
                 await asyncio.sleep(0.01)
+            # Final chunk — carry chris_metadata so the frontend can surface the
+            # "Open chat with [agent]" button. The middleware forwards this dict
+            # as-is when choices[0].delta has no content.
             final = {
                 "id": chunk_id,
                 "object": "chat.completion.chunk",
                 "created": int(time.time()),
                 "model": form_data.get("model"),
                 "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                **({"chris_metadata": chris_metadata} if chris_metadata else {}),
             }
             yield f"data: {json.dumps(final)}\n\n"
             yield "data: [DONE]\n\n"
@@ -144,6 +156,7 @@ async def _generate_chris_chat_completion(
             }
         ],
         "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        **({"chris_metadata": chris_metadata} if chris_metadata else {}),
     }
 
 
