@@ -21,6 +21,7 @@ product.
 | D. Registry ownership    | Can someone overwrite or delete an entry they don't own?      | 3 green             |
 | E. SSRF via "add by URL" | Can an admin point the hub at an internal URL?                | 1 green, 2 deferred |
 | F. Secret key hygiene    | Did we ship the default JWT signing key?                      | conditional         |
+| G. Cloud Run deploy path | Does "Deploy to Cloud Run" leak keys, run as non-admin, or leave orphan rows? | 9 green |
 
 "JWT" is the signed token the browser sends with every request to
 prove who you are. A _system prompt_ is the private instruction given
@@ -217,6 +218,51 @@ is the deployment's responsibility.
 
 ---
 
+### G. Cloud Run deploy path — `TestCloudRunDeployment`
+
+**The bad scenario.** OpenBeavs now supports deploying agents to
+**dedicated Google Cloud Run services** instead of hosting them inside
+the hub itself. The new code path shells out to `gcloud run deploy`
+and expects an API key wired up via Secret Manager. Three real
+regressions could land here. (1) A non-admin convinces the form to
+trigger a real GCP deploy — that's a billable side effect on shared
+infrastructure. (2) The hub forwards the API key as a plain
+environment variable instead of a Secret Manager reference, leaving it
+visible in `gcloud run services describe`. (3) The deploy fails
+halfway and leaves an "orphan" agent row in the database that points
+at a service that doesn't exist.
+
+**What the hub does about it.** The deploy endpoint is admin-gated;
+the helper that talks to gcloud always uses `--update-secrets`
+(routed through Secret Manager) for the provider API key, never
+`--set-env-vars`; and the route invokes the gcloud helper **before**
+inserting the database row, so a failed deploy raises a 502 and
+leaves no agent row behind.
+
+**What the tests do.** Nine tests, all of which mock the gcloud
+subprocess call so CI never makes a real GCP request. The mock
+captures every argument, and the tests assert: (1) a non-admin
+request is rejected with 401 *and* the mock is never invoked; (2)
+each provider routes to the correct source directory under
+`agents/{claude,chatgpt,gemini}-agent/`; (3) the API-key env var
+appears in the `--update-secrets` payload but never in the
+`--set-env-vars` payload; (4) when the mock raises a deploy failure,
+the response is 502 and zero agent rows exist; (5) when the
+operator sets `OPENBEAVS_CLOUD_RUN_DISABLED=1`, the deploy returns
+503 (not 500) and the in-hub fallback path keeps working.
+
+**What green proves (and doesn't).** Green proves the hub's deploy
+code path holds the listed invariants on every commit. Green does
+**not** prove the resulting Cloud Run service is configured exactly
+right — that requires a real GCP deploy, which the tests deliberately
+do not perform. Operationally, the
+[Production API Keys doc](./PROD_API_KEYS.md) is the
+checklist for that part. Green also does not prove anything about
+the per-agent service after it's running — just about the act of
+provisioning it.
+
+---
+
 ## The "not yet" list
 
 These gaps are real. They are deliberately not tested green in this
@@ -253,10 +299,10 @@ pytest backend/open_webui/test/security/ -v
 The last line of output should read something like:
 
 ```
-23 passed, 2 skipped, 1 xfailed in 43.0s
+31 passed, 2 skipped, 1 xfailed in ~55s
 ```
 
-- **23 passed** — 23 attack scenarios were executed against the
+- **31 passed** — 31 attack scenarios were executed against the
   current code and rejected as intended.
 - **2 skipped** — two placeholders waiting on SEC-001 (SSRF fix) and
   the CI-only secret-key gate.
