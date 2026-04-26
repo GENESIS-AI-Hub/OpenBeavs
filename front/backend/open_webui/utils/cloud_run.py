@@ -92,8 +92,9 @@ def deploy_provider_agent(
     if os.environ.get("OPENBEAVS_CLOUD_RUN_DISABLED") == "1":
         raise CloudRunDisabled(
             "Cloud Run deploys are disabled on this hub "
-            "(OPENBEAVS_CLOUD_RUN_DISABLED=1). The agent will be served "
-            "by the hub itself in internal-mode instead."
+            "(OPENBEAVS_CLOUD_RUN_DISABLED=1). The agent was NOT created. "
+            "Uncheck 'Deploy to dedicated Cloud Run service' and submit "
+            "again to host the agent inside this hub instance."
         )
 
     if provider not in _PROVIDER_DIRS:

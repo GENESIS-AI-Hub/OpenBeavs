@@ -337,6 +337,70 @@ doesn't re-add it.
 
 ---
 
+## Provider keys on the hub itself (separate from per-agent services)
+
+Internal-mode agents (the default — Cloud Run checkbox unchecked)
+are served *by the hub container* in-process. They call the LLM
+provider directly from the hub, so the hub needs at least one of:
+
+- `ANTHROPIC_API_KEY`
+- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
+
+This is **separate** from the per-agent secret bindings in
+`docs/PROD_API_KEYS.md`: those wire keys onto each provisioned
+Cloud Run service; this wires keys onto the hub itself for the
+in-process path.
+
+Provision via Secret Manager (same secret names as the per-agent
+flow — one source of truth):
+
+```bash
+PROJECT=osu-genesis-hub
+PN=$(gcloud projects describe $PROJECT --format='value(projectNumber)')
+
+# Grant the hub's runtime SA read access to whichever secrets it needs.
+# (Skip any provider you do not want available on the hub.)
+for SECRET in anthropic-api-key openai-api-key gemini-api-key; do
+  gcloud secrets add-iam-policy-binding $SECRET \
+    --member="serviceAccount:${PN}-compute@developer.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor" \
+    --project=$PROJECT
+done
+
+# Bind the keys on the hub. --update-secrets keeps values out of
+# revision metadata.
+gcloud run services update openbeavs-deploy-test \
+  --region=us-west1 \
+  --update-secrets=ANTHROPIC_API_KEY=anthropic-api-key:latest,OPENAI_API_KEY=openai-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest
+```
+
+You only need to do this once per project; CI deploys preserve
+secret bindings across revisions. If you only want one provider
+live for now, drop the others from the `--update-secrets` line.
+
+### Verifying
+
+```bash
+gcloud run services describe openbeavs-deploy-test \
+  --region=us-west1 \
+  --format='value(spec.template.spec.containers[0].env)'
+# Expect: ANTHROPIC_API_KEY -> secretKeyRef (not value), and similar
+# for any other providers you bound.
+```
+
+### Why this matters operationally
+
+Without a key on the hub, any chat with an internal-mode agent
+returns `502: ANTHROPIC_API_KEY is not set on the hub; cannot run
+internal agent` (or the equivalent for the configured provider).
+The reply path no longer self-HTTPS-calls (that was the source of
+the 60 s `ReadTimeout` we hit before the in-process short-circuit
+shipped), so the error surfaces immediately rather than after a
+minute.
+
+---
+
 ## Cost overview
 
 Cloud Run charges per request CPU time and per request count, with a
