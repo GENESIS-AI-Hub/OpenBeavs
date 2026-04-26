@@ -275,6 +275,68 @@ services.
 
 ---
 
+## Why the prod hub returns 503 on "Deploy to Cloud Run service"
+
+`cloudbuild.yaml` sets `OPENBEAVS_CLOUD_RUN_DISABLED=1` on the
+`openbeavs-deploy-test` service on purpose. Two gaps in the hub
+image make the in-UI button non-functional today:
+
+1. **No `gcloud` CLI in the hub image.** The base image is
+   `python:3.11-slim` and the root `Dockerfile` does not
+   `apt-get install google-cloud-sdk` or pip-install
+   `google-cloud-run`. The current `utils/cloud_run.py` shells
+   out to `gcloud run deploy`, so the call would 502.
+2. **No `agents/` directory inside the hub image.** The
+   `Dockerfile` only `COPY`s `front/backend/open_webui/` and the
+   built static assets. `utils/cloud_run.py` resolves the source
+   dir at `BASE_DIR.parent / "agents"`, which doesn't exist
+   inside the deployed container.
+
+So the prod hub UI button intentionally returns a clean 503
+("Cloud Run deploys are disabled on this hub") rather than
+crashing with a 500 or stack trace.
+
+### How to actually deploy a per-agent service today
+
+Until the follow-up PR (Path B — Cloud Run Admin REST API + ADC,
+plus `COPY agents/...` in the `Dockerfile`) lands, deploy from a
+developer laptop where both gcloud and the agent source dirs are
+present:
+
+```bash
+cd /path/to/OpenBeavs/front/backend
+PYTHONPATH=. python <<'EOF'
+from open_webui.utils.cloud_run import deploy_provider_agent
+url = deploy_provider_agent(
+    "smoke-deadbeef-1234",
+    provider="anthropic",
+    model="claude-sonnet-4-6",
+    system_prompt="You answer in exactly one sentence.",
+)
+print("Deployed to:", url)
+EOF
+```
+
+This drives the same helper the router would call. The Secret
+Manager wiring in `docs/PROD_API_KEYS.md` still applies — the
+runtime SA on the *agent's* Cloud Run service is what reads the
+secret, regardless of whether the deploy was triggered from the
+hub UI or a laptop.
+
+### Flipping the gate off (after Path B ships)
+
+```bash
+gcloud run services update openbeavs-deploy-test \
+  --region=us-west1 \
+  --remove-env-vars=OPENBEAVS_CLOUD_RUN_DISABLED
+```
+
+Then remove `OPENBEAVS_CLOUD_RUN_DISABLED=1` from
+`cloudbuild.yaml`'s `--set-env-vars` so the next CI deploy
+doesn't re-add it.
+
+---
+
 ## Cost overview
 
 Cloud Run charges per request CPU time and per request count, with a

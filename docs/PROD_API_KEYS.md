@@ -166,6 +166,24 @@ and the screen recording.
 
 ---
 
+## Laptop-driven deploys (current default)
+
+The deployed prod hub returns 503 when an admin checks "Deploy to
+Cloud Run service" — the hub image doesn't ship `gcloud` yet, so the
+in-UI button is intentionally gated off via
+`OPENBEAVS_CLOUD_RUN_DISABLED=1`. See
+`docs/CLOUD_RUN_OPERATIONS.md` for the gate's rationale and the
+laptop-side script that drives the same helper the router would.
+
+The Secret Manager wiring on this page is unchanged for that path.
+The runtime SA that reads each secret is the *agent's* Cloud Run
+service account (`<project-number>-compute@developer.gserviceaccount.com`
+by default), not the hub's. Whether the deploy is triggered from the
+hub UI or a laptop, the per-agent service still reads
+`anthropic-api-key:latest` (etc.) at cold start.
+
+---
+
 ## Out-of-scope
 
 - Multi-tenant key isolation (per-user secret routing) — not supported
